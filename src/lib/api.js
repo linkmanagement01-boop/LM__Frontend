@@ -592,8 +592,10 @@ export const managerAPI = {
 
   // WORKFLOW STEP 5 (AUTO-ROUTING): Push tasks to bloggers
   // Each website is automatically assigned to its owner (the vendor who uploaded it)
-  pushToBloggers: async (taskId) => {
-    const response = await api.post(`/manager/tasks/${taskId}/push-to-bloggers`);
+  pushToBloggers: async (taskId, sendEmail = true) => {
+    const response = await api.post(`/manager/tasks/${taskId}/push-to-bloggers`, {
+      send_email: sendEmail
+    });
     return response.data;
   },
 

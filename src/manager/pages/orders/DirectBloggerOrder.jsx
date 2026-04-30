@@ -47,7 +47,8 @@ export const DirectBloggerOrder = () => {
         fc: false,
         order_package: '',
         category: '',
-        notes: ''
+        notes: '',
+        sendEmail: true
     });
 
     const isSubOrder = form.order_type_toggle === 'Sub Order';
@@ -246,7 +247,7 @@ export const DirectBloggerOrder = () => {
                 websites: websitesData
             };
 
-            await managerAPI.createOrderChain(orderData, 'blogger', websitesData, contentData, null);
+            await managerAPI.createOrderChain({ ...orderData, send_email: form.sendEmail }, 'blogger', websitesData, contentData, null);
 
             setSuccess('Order created and pushed to Blogger successfully!');
             setTimeout(() => navigate('/manager/orders'), 1500);
@@ -673,22 +674,41 @@ export const DirectBloggerOrder = () => {
                     </div>
                 )}
 
-                {/* Submit Button */}
-                <div className="flex justify-end gap-4">
-                    <button onClick={() => navigate('/manager/orders/create')}
-                        className="premium-btn border border-[var(--border)] hover:bg-white/5 px-6 py-3">
-                        Cancel
-                    </button>
-                    <button onClick={handleSubmit} disabled={loading || !canSubmit}
-                        className={`premium-btn px-8 py-3 flex items-center gap-2 ${canSubmit
-                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 shadow-lg shadow-purple-500/30'
-                            : 'bg-[#2A2A2A] text-gray-500 cursor-not-allowed'}`}>
-                        {loading ? (
-                            <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div> Creating...</>
-                        ) : (
-                            <><Send className="h-4 w-4" /> Create & Push to Blogger</>
-                        )}
-                    </button>
+                {/* Submit Email Toggle and Button */}
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-t border-[var(--border)] pt-6">
+                    <div>
+                        <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-[var(--border)] hover:border-purple-500/30 transition-colors">
+                            <div className="relative">
+                                <input
+                                    type="checkbox"
+                                    className="hidden"
+                                    checked={form.sendEmail}
+                                    onChange={(e) => setForm({ ...form, sendEmail: e.target.checked })}
+                                />
+                                <div className={`w-10 h-6 bg-[var(--background-dark)] rounded-full shadow-inner transition-colors ${form.sendEmail ? 'border border-purple-500' : 'border border-[var(--border)]'}`}></div>
+                                <div className={`absolute top-1 left-1 w-4 h-4 bg-purple-400 rounded-full shadow transition-transform ${form.sendEmail ? 'transform translate-x-4 bg-purple-500' : 'bg-[var(--text-muted)]'}`}></div>
+                            </div>
+                            <span className="text-sm font-medium text-[var(--text-primary)] select-none">
+                                Send Email Notification to Bloggers
+                            </span>
+                        </label>
+                    </div>
+                    <div className="flex justify-end gap-4">
+                        <button onClick={() => navigate('/manager/orders/create')}
+                            className="premium-btn border border-[var(--border)] hover:bg-[var(--background-dark)] px-6 py-3">
+                            Cancel
+                        </button>
+                        <button onClick={handleSubmit} disabled={loading || !canSubmit}
+                            className={`premium-btn px-8 py-3 flex items-center gap-2 ${canSubmit
+                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90 shadow-lg shadow-purple-500/30'
+                                : 'bg-[var(--background-dark)] text-[var(--text-muted)] cursor-not-allowed border border-[var(--border)]'}`}>
+                            {loading ? (
+                                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/30 border-t-white"></div> Creating...</>
+                            ) : (
+                                <><Send className="h-4 w-4" /> Create & Push to Blogger</>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </Layout>

@@ -20,7 +20,8 @@ export function WithdrawalRequests() {
         name: '',
         email: '',
         paymentMethod: '',
-        date: ''
+        startDate: '',
+        endDate: ''
     });
 
     // Debounced filter state
@@ -47,7 +48,8 @@ export function WithdrawalRequests() {
                     filter_name: debouncedFilters.name || undefined,
                     filter_email: debouncedFilters.email || undefined,
                     filter_payment_method: debouncedFilters.paymentMethod || undefined,
-                    filter_date: debouncedFilters.date || undefined
+                    filter_start_date: debouncedFilters.startDate || undefined,
+                    filter_end_date: debouncedFilters.endDate || undefined
                 }
             });
             setWithdrawals(response.data.withdrawals || []);
@@ -136,12 +138,12 @@ export function WithdrawalRequests() {
 
     // Reset filters
     const resetFilters = () => {
-        setFilters({ name: '', email: '', paymentMethod: '', date: '' });
+        setFilters({ name: '', email: '', paymentMethod: '', startDate: '', endDate: '' });
     };
 
     // Check if any filter is active
-    const hasActiveFilters = filters.name || filters.email || filters.paymentMethod || filters.date;
-    const activeFilterCount = [filters.name, filters.email, filters.paymentMethod, filters.date].filter(Boolean).length;
+    const hasActiveFilters = filters.name || filters.email || filters.paymentMethod || filters.startDate || filters.endDate;
+    const activeFilterCount = [filters.name, filters.email, filters.paymentMethod, filters.startDate, filters.endDate].filter(Boolean).length;
 
     const filteredWithdrawals = withdrawals
         .filter(w =>
@@ -236,7 +238,7 @@ export function WithdrawalRequests() {
                             </button>
                         )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                         {/* Name Filter */}
                         <div>
                             <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Name</label>
@@ -274,16 +276,33 @@ export function WithdrawalRequests() {
                                 {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                             </select>
                         </div>
-                        {/* Date Filter */}
-                        <div>
-                            <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Date</label>
-                            <input
-                                type="date"
-                                value={filters.date}
-                                onChange={e => setFilters({ ...filters, date: e.target.value })}
-                                className="w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-200 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                                style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                            />
+                        {/* Date Range Filter */}
+                        <div className="md:col-span-2">
+                            <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Date Range</label>
+                            <div className="flex items-center gap-2">
+                                <div className="relative flex-1">
+                                    <input
+                                        type="date"
+                                        value={filters.startDate}
+                                        onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                                        className="w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-200 focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                                        style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                                        placeholder="Start Date"
+                                    />
+                                </div>
+                                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>to</span>
+                                <div className="relative flex-1">
+                                    <input
+                                        type="date"
+                                        value={filters.endDate}
+                                        onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                                        min={filters.startDate || undefined}
+                                        className="w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-200 focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                                        style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                                        placeholder="End Date"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {hasActiveFilters && (
@@ -470,6 +489,20 @@ export function WithdrawalRequests() {
                                 ))
                             )}
                         </tbody>
+                        <tfoot>
+                            <tr style={{ borderTop: '2px solid var(--border)', backgroundColor: 'var(--background-dark)' }}>
+                                <td className="px-4 py-4" colSpan={3}></td>
+                                <td className="px-4 py-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Total Amount</span>
+                                        <span className="text-lg font-bold" style={{ color: 'var(--warning)' }}>
+                                            ${filteredWithdrawals.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0).toFixed(2)}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td className="px-4 py-4" colSpan={2}></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>

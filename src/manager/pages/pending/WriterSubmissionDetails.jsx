@@ -32,6 +32,9 @@ export function WriterSubmissionDetails() {
     const [rejectionMode, setRejectionMode] = useState(startInRejectMode);
     const [rejectedWebsites, setRejectedWebsites] = useState({}); // { websiteId: { rejected: bool, reason: string } }
     const [globalRejectionReason, setGlobalRejectionReason] = useState('');
+    
+    // Email notification state
+    const [sendEmail, setSendEmail] = useState(true);
 
     const fetchTask = useCallback(async () => {
         try {
@@ -102,7 +105,7 @@ export function WriterSubmissionDetails() {
     const handlePushToBloggers = async () => {
         try {
             setProcessing(true);
-            await managerAPI.pushToBloggers(id);
+            await managerAPI.pushToBloggers(id, sendEmail);
             showSuccess('Tasks pushed to bloggers! Each site was assigned to its owner.');
             navigate('/manager/pending/writers');
         } catch (err) {
@@ -390,6 +393,25 @@ export function WriterSubmissionDetails() {
                                     <p className="text-sm text-cyan-100/80">
                                         <strong>Auto-Routing System:</strong> Each website will be automatically assigned to its owner (the vendor who uploaded the site). Please verify all details before pushing.
                                     </p>
+                                </div>
+
+                                {/* Email Toggle */}
+                                <div className="flex justify-center mb-6">
+                                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-[var(--background-dark)] border border-[var(--border)] hover:border-cyan-500/30 transition-colors">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={sendEmail}
+                                                onChange={(e) => setSendEmail(e.target.checked)}
+                                            />
+                                            <div className={`w-10 h-6 bg-gray-700 rounded-full shadow-inner transition-colors ${sendEmail ? 'bg-cyan-500' : ''}`}></div>
+                                            <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${sendEmail ? 'transform translate-x-4' : ''}`}></div>
+                                        </div>
+                                        <span className="text-sm font-medium text-[var(--text-primary)] select-none">
+                                            Send Email Notification to Bloggers
+                                        </span>
+                                    </label>
                                 </div>
 
                                 {/* Action Button - Push to Blogger */}

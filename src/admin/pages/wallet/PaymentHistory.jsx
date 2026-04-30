@@ -15,7 +15,7 @@ export function PaymentHistory() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'clearance_date', direction: 'asc' });
     const [selectedRows, setSelectedRows] = useState(new Set());
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -31,7 +31,8 @@ export function PaymentHistory() {
         name: '',
         email: '',
         paymentMethod: '',
-        clearanceDate: ''
+        startDate: '',
+        endDate: ''
     });
 
     useEffect(() => {
@@ -93,7 +94,8 @@ export function PaymentHistory() {
                     filter_name: filters.name || undefined,
                     filter_email: filters.email || undefined,
                     filter_payment_method: filters.paymentMethod || undefined,
-                    filter_clearance_date: filters.clearanceDate || undefined
+                    filter_start_date: filters.startDate || undefined,
+                    filter_end_date: filters.endDate || undefined
                 }
             });
             setPayments(response.data.payments || []);
@@ -313,12 +315,12 @@ export function PaymentHistory() {
 
     // Reset filters - also reset to page 1
     const resetFilters = () => {
-        setFilters({ name: '', email: '', paymentMethod: '', clearanceDate: '' });
+        setFilters({ name: '', email: '', paymentMethod: '', startDate: '', endDate: '' });
         setPage(1);
     };
 
     // Check if any filter is active
-    const hasActiveFilters = filters.name || filters.email || filters.paymentMethod || filters.clearanceDate;
+    const hasActiveFilters = filters.name || filters.email || filters.paymentMethod || filters.startDate || filters.endDate;
 
     return (
         <div className="space-y-6">
@@ -405,17 +407,32 @@ export function PaymentHistory() {
                                     {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                                 </select>
                             </div>
-                            {/* Clearance Date Filter */}
-                            <div>
-                                <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Clearance Date</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={filters.clearanceDate}
-                                        onChange={e => setFilters({ ...filters, clearanceDate: e.target.value })}
-                                        className="w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-200 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                                        style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                                    />
+                            {/* Clearance Date Range Filter */}
+                            <div className="md:col-span-2">
+                                <label className="block text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>Clearance Date Range</label>
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="date"
+                                            value={filters.startDate}
+                                            onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                                            className="w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-200 focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                                            style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                                            placeholder="Start Date"
+                                        />
+                                    </div>
+                                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>to</span>
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="date"
+                                            value={filters.endDate}
+                                            onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                                            min={filters.startDate || undefined}
+                                            className="w-full rounded-xl px-3 py-2.5 text-sm transition-all duration-200 focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                                            style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                                            placeholder="End Date"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
