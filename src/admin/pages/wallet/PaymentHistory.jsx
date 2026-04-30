@@ -15,7 +15,7 @@ export function PaymentHistory() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({ key: 'clearance_date', direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
     const [selectedRows, setSelectedRows] = useState(new Set());
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -84,12 +84,17 @@ export function PaymentHistory() {
     const fetchPayments = async () => {
         try {
             setLoading(true);
+            // Auto-switch to clearance_date ASC when date filter is active
+            const hasDateFilter = filters.startDate || filters.endDate;
+            const effectiveSortBy = hasDateFilter ? 'clearance_date' : sortConfig.key;
+            const effectiveSortOrder = hasDateFilter ? 'asc' : sortConfig.direction;
+
             const response = await api.get('/admin/wallet/payment-history', {
                 params: {
                     page,
                     limit,
-                    sort_by: sortConfig.key,
-                    sort_order: sortConfig.direction,
+                    sort_by: effectiveSortBy,
+                    sort_order: effectiveSortOrder,
                     // Server-side filter params
                     filter_name: filters.name || undefined,
                     filter_email: filters.email || undefined,
