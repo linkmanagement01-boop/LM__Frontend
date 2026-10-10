@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Phone, MessageCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import api from '../lib/api';
@@ -20,6 +20,16 @@ export function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+    const [step, setStep] = useState('form'); // 'form' or 'verify'
+  const [code, setCode] = useState('');
+  const [info, setInfo] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,11 +38,18 @@ export function SignupPage() {
     if (error) setError('');
   };
 
+    const sendCode = async () => {
+    await api.post('/auth/register/send-code', formData);
+    setStep('verify');
+    setCode('');
+    setCooldown(60);
+    setInfo(`We sent a 6-digit code to ${formData.email}. It expires in 10 minutes.`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // --- Validation (Simplified for brevity, but kept functional) ---
     if (!formData.name || formData.name.trim().length < 2) return setError('Name is required');
     if (!formData.email || !formData.email.includes('@')) return setError('Invalid email address');
     if (!formData.password || formData.password.length < 8) return setError('Password too short (min 8 chars)');
@@ -42,11 +59,37 @@ export function SignupPage() {
 
     try {
       setLoading(true);
-      await api.post('/auth/register', formData);
-      navigate('/login', { state: { message: 'Registration successful! Please sign in.' } });
+      await sendCode();
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Could not send the code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!/^\d{6}$/.test(code)) return setError('Enter the 6-digit code from your email');
+
+    try {
+      setLoading(true);
+      await api.post('/auth/register/verify', { email: formData.email, code });
+      navigate('/login', { state: { message: 'Account created successfully! Please sign in.' } });
+    } catch (err) {
+      setError(err.message || 'Verification failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError('');
+    try {
+      setLoading(true);
+      await sendCode();
+    } catch (err) {
+      setError(err.message || 'Could not resend the code.');
     } finally {
       setLoading(false);
     }
@@ -92,6 +135,7 @@ export function SignupPage() {
             </div>
           )}
 
+          {step === 'form' && (
           <form onSubmit={handleSubmit} className="space-y-5">
 
             {/* Name */}
@@ -215,7 +259,62 @@ export function SignupPage() {
                 </>
               )}
             </button>
-          </form>
+                    </form>
+          )}
+
+          {step === 'verify' && (
+            <form onSubmit={handleVerify} className="space-y-5">
+              {info && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-sm text-emerald-700 font-medium">{info}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 tracking-wider mb-2">Verification Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => { setCode(e.target.value.replace(/\D/g, '')); if (error) setError(''); }}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-center text-2xl tracking-[0.5em] font-bold text-slate-900 focus:outline-none focus:border-[#F97316]/50 focus:bg-white focus:ring-4 focus:ring-[#F97316]/10 transition-all duration-300"
+                  placeholder="------"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || code.length !== 6}
+                className="w-full bg-[#F97316] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-[#EA580C] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                ) : (
+                  'Verify & Create Account'
+                )}
+              </button>
+
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={() => { setStep('form'); setError(''); setInfo(''); }}
+                  className="text-slate-500 hover:text-slate-900 font-medium"
+                >
+                  Change email
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={loading || cooldown > 0}
+                  className="text-[#F97316] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            </form>
+          )}
 
           <div className="mt-8 text-center border-t border-slate-100 pt-6">
             <p className="text-slate-500 font-medium text-sm">
