@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, X, Eye, Edit2, RefreshCw, User, Tag, ExternalLink, Calendar, Check, Globe, FileText, LayoutTemplate, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Pagination } from '../../../components/Pagination.jsx';
@@ -38,20 +38,43 @@ export const ViewOrders = () => {
   const [editData, setEditData] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Debounce search so we don't hit the server on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(filters.search.trim()), 400);
+    return () => clearTimeout(t);
+  }, [filters.search]);
+
+  // Any filter change starts again from page 1
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters.status, filters.orderType]);
+
+  // Only the latest request may update the table (older, slower responses are ignored)
+  const requestSeq = useRef(0);
+
   const fetchOrders = useCallback(async () => {
+    const seq = ++requestSeq.current;
     try {
       setLoading(true);
       setError('');
-      const response = await managerAPI.getOrders({ page, limit: pageSize });
+      // Filters are applied on the server so they search across all pages
+      const params = { page, limit: pageSize };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (filters.status) params.status = filters.status;
+      if (filters.orderType) params.order_type = filters.orderType;
+      const response = await managerAPI.getOrders(params);
+      if (seq !== requestSeq.current) return;
       setOrders(response.orders || []);
       setTotal(response.total || 0);
     } catch (err) {
+      if (seq !== requestSeq.current) return;
       console.error('Error fetching orders:', err);
       setError(err.message || 'Failed to load orders');
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) setLoading(false);
     }
-  }, [page, pageSize]);
+  }, [page, pageSize, debouncedSearch, filters.status, filters.orderType]);
 
   useEffect(() => {
     fetchOrders();
@@ -95,30 +118,8 @@ export const ViewOrders = () => {
     };
   }, [socket, isConnected, joinOrdersList, fetchOrders]);
 
-  // Local filter - search within loaded data
-  const filteredOrders = useMemo(() => {
-    let list = orders;
-    const q = filters.search.trim().toLowerCase();
-    if (q) {
-      list = list.filter(o =>
-        (o.order_id || '').toLowerCase().includes(q) ||
-        (o.client_name || '').toLowerCase().includes(q) ||
-        (o.manager_name || '').toLowerCase().includes(q) ||
-        (o.client_website || '').toLowerCase().includes(q)
-      );
-    }
-    if (filters.status) {
-      list = list.filter(o => o.status_label === filters.status);
-    }
-    if (filters.orderType) {
-      list = list.filter(o => {
-        if (filters.orderType === 'gp') return o.order_type === 'gp';
-        if (filters.orderType === 'niche') return o.order_type === 'niche';
-        return true;
-      });
-    }
-    return list;
-  }, [orders, filters]);
+  // Filtering is done by the server; the loaded page is already filtered
+  const filteredOrders = orders;
 
   const openDetailModal = (order) => {
     setSelectedOrder(order);
