@@ -95,6 +95,27 @@ export function Bloggers() {
     }
   };
 
+  // Toggle account status (Active/Inactive). The server refuses to deactivate a blogger
+  // who still has orders in progress or money in their wallet, and tells us why.
+  const [statusLoading, setStatusLoading] = useState(null);
+  const handleToggleStatus = async (userId, userName, isActive) => {
+    if (statusLoading) return;
+    const makeActive = !isActive;
+    if (!makeActive && !window.confirm(`Make ${userName || 'this blogger'} inactive?\n\nTheir sites, orders and payments will be hidden from every page and they won't be able to log in. Making them active again brings everything back.`)) {
+      return;
+    }
+    setStatusLoading(userId);
+    try {
+      await adminAPI.updateUser(userId, { is_active: makeActive });
+      setUsers(prev => prev.map(u => (u.id === userId ? { ...u, is_active: makeActive ? 1 : 0 } : u)));
+      showSuccess(`${userName || 'Blogger'} is now ${makeActive ? 'Active' : 'Inactive'}`);
+    } catch (err) {
+      window.alert(err.message || 'Failed to update status');
+    } finally {
+      setStatusLoading(null);
+    }
+  };
+
   // Navigate to Performance
   const handlePerformance = (userId) => {
     navigate(`/admin/bloggers/${userId}/performance`);
@@ -374,15 +395,26 @@ export function Bloggers() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{b.name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text-secondary)' }}>{b.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className="px-2 py-1 rounded-full text-xs font-medium"
+                      {/* Toggle Switch for Account Status */}
+                      <button
+                        onClick={() => handleToggleStatus(b.id, b.name, !!b.is_active)}
+                        disabled={statusLoading === b.id}
+                        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 align-middle"
                         style={{
-                          backgroundColor: b.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                          color: b.is_active ? 'var(--success)' : 'var(--error)',
-                          border: `1px solid ${b.is_active ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                          backgroundColor: b.is_active ? '#22c55e' : '#475569',
+                          opacity: statusLoading === b.id ? 0.6 : 1
                         }}
+                        title={b.is_active ? 'Click to make inactive' : 'Click to make active'}
                       >
-                        {b.is_active ? 'Active' : 'Blocked'}
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${b.is_active ? 'translate-x-6' : 'translate-x-1'}`}
+                        />
+                      </button>
+                      <span
+                        className="ml-2 text-xs align-middle"
+                        style={{ color: b.is_active ? 'var(--success)' : 'var(--error)' }}
+                      >
+                        {b.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center" style={{ color: 'var(--text-primary)' }}>{b.total_orders || 0}</td>
