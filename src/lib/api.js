@@ -209,6 +209,12 @@ export const adminAPI = {
     return response.data;
   },
 
+  // Permanently delete a blogger (refused if they have any order/payment/wallet history)
+  deleteBlogger: async (bloggerId) => {
+    const response = await api.delete(`/admin/bloggers/${bloggerId}`);
+    return response.data;
+  },
+
   impersonateUser: async (userId) => {
     const response = await api.post(`/admin/users/${userId}/impersonate`);
     return response.data;
