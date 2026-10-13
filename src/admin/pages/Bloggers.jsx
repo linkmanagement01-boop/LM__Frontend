@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, Users, Lock, BarChart2, SlidersHorizontal, X, LogIn } from 'lucide-react';
+import { RefreshCw, Users, Lock, BarChart2, SlidersHorizontal, X, LogIn, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination.jsx';
 import { adminAPI } from '../../lib/api';
@@ -113,6 +113,28 @@ export function Bloggers() {
       window.alert(err.message || 'Failed to update status');
     } finally {
       setStatusLoading(null);
+    }
+  };
+
+  // Permanently delete a blogger. The icon only shows for bloggers with no work history,
+  // and the server checks again in case something changed since the page loaded.
+  const [deletingId, setDeletingId] = useState(null);
+  const handleDelete = async (userId, userName, email) => {
+    if (deletingId) return;
+    if (!window.confirm(`Are you sure you want to permanently delete blogger ${userName || ''} (${email})?\n\nTheir account and websites will be removed. This cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(userId);
+    try {
+      await adminAPI.deleteBlogger(userId);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      setTotal(prev => Math.max(0, prev - 1));
+      showSuccess(`${userName || 'Blogger'} has been deleted`);
+    } catch (err) {
+      window.alert(err.message || 'Failed to delete blogger');
+      fetchUsers(page, pageSize, filters); // refresh, in case the blogger is no longer deletable
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -452,6 +474,17 @@ export function Bloggers() {
                         >
                           <LogIn className="h-4 w-4 text-purple-400 group-hover:text-purple-300" />
                         </button>
+                        {/* Delete: only shown for bloggers who never did any work (e.g. spam signups) */}
+                        {b.can_delete && (
+                          <button
+                            onClick={() => handleDelete(b.id, b.name, b.email)}
+                            disabled={deletingId === b.id}
+                            className="p-2 rounded-lg hover:bg-red-500/10 transition-colors group"
+                            title={`Delete ${b.name || 'this blogger'}`}
+                          >
+                            <Trash2 className={`h-4 w-4 text-red-400 group-hover:text-red-300 ${deletingId === b.id ? 'animate-pulse' : ''}`} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
