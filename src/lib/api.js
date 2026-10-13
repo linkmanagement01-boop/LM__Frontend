@@ -215,6 +215,12 @@ export const adminAPI = {
     return response.data;
   },
 
+  // Reasons a blogger can't be deleted (for the grey delete icon tooltip)
+  getBloggerDeleteBlockers: async (bloggerId) => {
+    const response = await api.get(`/admin/bloggers/${bloggerId}/delete-blockers`);
+    return response.data;
+  },
+
   impersonateUser: async (userId) => {
     const response = await api.post(`/admin/users/${userId}/impersonate`);
     return response.data;
