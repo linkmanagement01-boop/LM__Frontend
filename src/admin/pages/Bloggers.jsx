@@ -138,6 +138,21 @@ export function Bloggers() {
     }
   };
 
+  // Why a blogger can't be deleted – loaded on first hover of the grey icon, then cached
+  const [deleteReasons, setDeleteReasons] = useState({}); // { [userId]: string[] | 'loading' }
+  // Tooltip is fixed to the screen so the table's scroll box can't cut it off
+  const [reasonTip, setReasonTip] = useState(null); // { id, right, top, bottom }
+  const loadDeleteReasons = async (userId) => {
+    if (deleteReasons[userId]) return;
+    setDeleteReasons(prev => ({ ...prev, [userId]: 'loading' }));
+    try {
+      const data = await adminAPI.getBloggerDeleteBlockers(userId);
+      setDeleteReasons(prev => ({ ...prev, [userId]: data.blockers?.length ? data.blockers : ['This blogger can now be deleted – refresh the page.'] }));
+    } catch (err) {
+      setDeleteReasons(prev => ({ ...prev, [userId]: undefined }));
+    }
+  };
+
   // Navigate to Performance
   const handlePerformance = (userId) => {
     navigate(`/admin/bloggers/${userId}/performance`);
@@ -475,7 +490,7 @@ export function Bloggers() {
                           <LogIn className="h-4 w-4 text-purple-400 group-hover:text-purple-300" />
                         </button>
                         {/* Delete: only shown for bloggers who never did any work (e.g. spam signups) */}
-                        {b.can_delete && (
+                        {b.can_delete ? (
                           <button
                             onClick={() => handleDelete(b.id, b.name, b.email)}
                             disabled={deletingId === b.id}
@@ -484,6 +499,20 @@ export function Bloggers() {
                           >
                             <Trash2 className={`h-4 w-4 text-red-400 group-hover:text-red-300 ${deletingId === b.id ? 'animate-pulse' : ''}`} />
                           </button>
+                        ) : (
+                          /* Grey, not clickable: hover shows why this blogger can't be deleted */
+                          <span
+                            className="p-2 rounded-lg cursor-not-allowed inline-flex"
+                            onMouseEnter={(e) => {
+                              const r = e.currentTarget.getBoundingClientRect();
+                              setReasonTip({ id: b.id, right: r.right, top: r.top, bottom: r.bottom });
+                              loadDeleteReasons(b.id);
+                            }}
+                            onMouseLeave={() => setReasonTip(null)}
+                            aria-label="Delete not available"
+                          >
+                            <Trash2 className="h-4 w-4" style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
+                          </span>
                         )}
                       </div>
                     </td>
@@ -512,6 +541,30 @@ export function Bloggers() {
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
         />
+      )}
+
+      {/* Why-can't-delete tooltip (above the grey icon, or below it near the top of the screen) */}
+      {reasonTip && (
+        <div
+          className="w-72 px-3 py-2 text-xs leading-relaxed rounded-lg shadow-lg pointer-events-none"
+          style={{
+            backgroundColor: '#1e293b',
+            color: '#ffffff',
+            border: '1px solid #334155',
+            position: 'fixed',
+            zIndex: 1000,
+            left: Math.max(8, reasonTip.right - 288),
+            ...(reasonTip.top > 180
+              ? { top: reasonTip.top - 8, transform: 'translateY(-100%)' }
+              : { top: reasonTip.bottom + 8 })
+          }}
+        >
+          <span className="block font-semibold mb-1" style={{ color: '#fca5a5' }}>Can't delete this blogger</span>
+          {deleteReasons[reasonTip.id] === 'loading' || !deleteReasons[reasonTip.id]
+            ? <span className="block" style={{ color: '#ffffff' }}>Checking…</span>
+            : deleteReasons[reasonTip.id].map((r, i) => <span key={i} className="block" style={{ color: '#ffffff' }}>• {r}</span>)}
+          <span className="block mt-1" style={{ color: '#cbd5e1' }}>Use the Active/Inactive switch to hide them instead.</span>
+        </div>
       )}
     </div>
   );
