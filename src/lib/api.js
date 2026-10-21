@@ -171,6 +171,16 @@ export const authAPI = {
 // ==================== Admin APIs ====================
 
 export const adminAPI = {
+  // Marketplace pricing: blogger price ranges → marketplace price (per marketplace)
+  getMarketplacePricing: async (marketplace = 'whitelabel') => {
+    const response = await api.get('/admin/marketplace/pricing', { params: { marketplace } });
+    return response.data;
+  },
+  saveMarketplacePricing: async (marketplace, rules) => {
+    const response = await api.put('/admin/marketplace/pricing', { marketplace, rules });
+    return response.data;
+  },
+
   // Users
   getUsers: async (filters = {}) => {
     const response = await api.get('/admin/users', { params: filters });
@@ -792,6 +802,24 @@ export const teamAPI = {
     return response.data;
   },
 
+  // "Search Keyword" tab: blog posts of sites within budget that match the keyword
+  keywordSearch: async (taskId, params = {}) => {
+    const response = await api.get(`/team/order-notifications/${taskId}/keyword-search`, { params });
+    return response.data;
+  },
+
+  // Live re-check of one post right before it's picked (client link / used in our earlier orders)
+  verifyPost: async (taskId, url) => {
+    const response = await api.post(`/team/order-notifications/${taskId}/verify-post`, { url });
+    return response.data;
+  },
+
+  // Keyword score (permalink / H1 / content) for up to 10 post URLs from the search results
+  keywordScores: async (taskId, keyword, urls) => {
+    const response = await api.post(`/team/order-notifications/${taskId}/keyword-scores`, { keyword, urls });
+    return response.data;
+  },
+
   // Submit selected websites for an order (batch)
   submitWebsitesToManager: async (taskId, websiteIds, notes, websiteData = []) => {
     const response = await api.post(`/team/order-notifications/${taskId}/submit`, {
@@ -903,6 +931,12 @@ export const writerAPI = {
     return response.data;
   },
 
+  // AI suggestion for one Niche Edit site (saved on the server; regenerate = new paid call)
+  getNicheSuggestion: async (taskId, detailId, regenerate = false) => {
+    const response = await api.post(`/writer/tasks/${taskId}/niche-suggestions/${detailId}`, { regenerate }, { timeout: 150000 });
+    return response.data;
+  },
+
   getDashboard: async () => {
     const response = await api.get('/writer/dashboard');
     return response.data;
@@ -929,6 +963,12 @@ export const writerAPI = {
 // ==================== Blogger APIs ====================
 
 export const bloggerAPI = {
+  // Guides: help videos the admin adds under More Links → Videos
+  getGuides: async () => {
+    const response = await api.get('/blogger/guides');
+    return response.data;
+  },
+
   // Tasks
   getTasks: async () => {
     const response = await api.get('/blogger/tasks');

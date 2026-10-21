@@ -6,6 +6,19 @@ import { useToast } from '../../../context/ToastContext';
 import { Layout } from '../../components/layout/Layout';
 import { useAutoSave, AutoSaveIndicator } from '../../../hooks/useAutoSave';
 
+// Team notes are rich text: keep the formatting, drop anything that could run code
+const safeHtml = (html) => {
+    const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    doc.querySelectorAll('script, style, iframe, object, embed, form, input, button, link, meta').forEach(el => el.remove());
+    doc.querySelectorAll('*').forEach(el => {
+        [...el.attributes].forEach(a => {
+            const name = a.name.toLowerCase();
+            if (name.startsWith('on') || (['href', 'src', 'xlink:href'].includes(name) && /^\s*(javascript|data|vbscript):/i.test(a.value))) el.removeAttribute(a.name);
+        });
+    });
+    return doc.body.innerHTML;
+};
+
 export function TeamSubmissionDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -275,6 +288,17 @@ export function TeamSubmissionDetails() {
                                     <div className="text-[var(--text-primary)] font-medium">{task.team_name}</div>
                                 </div>
                             </div>
+
+                            {/* General note the team member wrote when pushing to the manager (only if they wrote one) */}
+                            {String(task.team_note || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() && (
+                                <div className="mt-5 pt-5 border-t border-[var(--border)]">
+                                    <label className="block text-[var(--text-muted)] mb-2 uppercase text-xs tracking-wider">Team Note</label>
+                                    <div
+                                        className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4 text-sm text-[var(--text-primary)]"
+                                        dangerouslySetInnerHTML={{ __html: safeHtml(task.team_note) }}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Selected Websites - Multiple */}

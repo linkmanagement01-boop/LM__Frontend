@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../components/ModernSidebar';
-import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal } from 'lucide-react';
+import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal, Store } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 
 export function AdminLayout() {
@@ -29,6 +29,10 @@ export function AdminLayout() {
     { icon: <Users size={20} />, label: 'Bloggers Lists', to: '/admin/bloggers', active: pathname.startsWith('/admin/bloggers') },
     { icon: <ShoppingCart size={20} />, label: 'Orders', to: '/admin/orders', active: pathname.startsWith('/admin/orders') },
     { icon: <BarChart3 size={20} />, label: 'Price Charts', to: '/admin/price-charts', active: pathname.startsWith('/admin/price-charts') },
+    // Marketplace isn't live yet – menu shows only where VITE_MARKETPLACE_ENABLED=true
+    ...(import.meta.env.VITE_MARKETPLACE_ENABLED === 'true'
+      ? [{ icon: <Store size={20} />, label: 'Marketplace Pricing', to: '/admin/marketplace-pricing', active: pathname.startsWith('/admin/marketplace-pricing') }]
+      : []),
     { icon: <Users2 size={20} />, label: 'Team Members', to: '/admin/team-members', active: pathname.startsWith('/admin/team-members') },
     {
       icon: <Globe size={20} />,

@@ -61,6 +61,7 @@
 
     /* Legacy Theme Support Mappings */
     --background-dark: transparent;
+    --background: var(--surface-muted); /* used by older pages (inputs, chips, footers) – was missing, so they fell back to near-black */
     --card-background: var(--surface);
     --border: var(--color-border);
     --text-primary: var(--text-main);

@@ -164,7 +164,7 @@ export function DeletedSites() {
                     <button
                         onClick={fetchWebsites}
                         disabled={loading}
-                        className="p-2 rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50 border border-[var(--border)]"
+                        className="p-2 rounded-xl hover:bg-[var(--surface-muted)] transition-colors disabled:opacity-50 border border-[var(--border)]"
                         title="Refresh Results"
                     >
                         <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} style={{ color: 'var(--text-muted)' }} />
@@ -346,12 +346,12 @@ export function DeletedSites() {
                     style={{ zIndex: 9999 }}
                 >
                     <div className="rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto flex flex-col shadow-2xl relative" style={{ backgroundColor: '#18181b', border: '1px solid var(--border)' }}>
-                        <div className="sticky top-0 p-4 border-b flex items-center justify-between bg-[#18181b] z-10" style={{ borderColor: 'var(--border)' }}>
+                        <div className="sticky top-0 p-4 border-b flex items-center justify-between bg-[var(--surface)] z-10" style={{ borderColor: 'var(--border)' }}>
                             <div>
                                 <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{selectedSite.root_domain}</h3>
                                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>ID: #{selectedSite.id}</p>
                             </div>
-                            <button onClick={() => setSelectedSite(null)} className="p-2 rounded-lg hover:bg-white/10 transition-colors"><X className="h-5 w-5" style={{ color: 'var(--text-muted)' }} /></button>
+                            <button onClick={() => setSelectedSite(null)} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] transition-colors"><X className="h-5 w-5" style={{ color: 'var(--text-muted)' }} /></button>
                         </div>
                         <div className="p-6 space-y-6">
                             {/* Layout matching user screenshot: Label - Value list */}
@@ -366,7 +366,7 @@ export function DeletedSites() {
                             </div>
 
                             {/* SEO Metrics (Keeping these as they are valuable) */}
-                            <div className="pt-4 border-t border-white/5">
+                            <div className="pt-4 border-t border-[var(--border)]">
                                 <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide opacity-70">SEO Metrics</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     <MetricBox label="DA" value={selectedSite.da} color="#FF6B6B" />
@@ -377,9 +377,9 @@ export function DeletedSites() {
                             </div>
 
                             {/* Status & Action Buttons */}
-                            <div className="pt-6 border-t border-white/10 flex flex-col gap-4">
+                            <div className="pt-6 border-t border-[var(--border)] flex flex-col gap-4">
                                 <div className="flex items-center justify-between">
-                                    <div className="text-lg font-bold text-white">
+                                    <div className="text-lg font-bold text-[var(--text-primary)]">
                                         Status: <span className={`${selectedSite.website_status === 'Approved' ? 'text-green-500' : selectedSite.website_status === 'Rejected' ? 'text-red-500' : 'text-yellow-500'}`}>{selectedSite.website_status || 'Pending'}</span>
                                     </div>
                                 </div>
@@ -415,16 +415,16 @@ function FilterSection({ title, children }) {
 
 function RangeInput({ label, state, onChange }) {
     return (
-        <div className="bg-white/5 rounded-lg p-2">
+        <div className="bg-[var(--surface-muted)] rounded-lg p-2">
             <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-400">{label}</span>
+                <span className="text-[var(--text-muted)]">{label}</span>
                 <span className="text-[var(--primary-cyan)]">{state.op} {state.val}</span>
             </div>
             <div className="flex gap-1">
                 <select
                     value={state.op}
                     onChange={(e) => onChange('op', e.target.value)}
-                    className="w-1/3 bg-black/20 rounded px-1 py-1 text-xs border border-white/10 outline-none"
+                    className="w-1/3 bg-[var(--surface-muted)] rounded px-1 py-1 text-xs border border-[var(--border)] outline-none"
                 >
                     <option value="">Op</option>
                     <option value=">">&gt;</option>
@@ -436,7 +436,7 @@ function RangeInput({ label, state, onChange }) {
                     placeholder="Val"
                     value={state.val}
                     onChange={(e) => onChange('val', e.target.value)}
-                    className="w-2/3 bg-black/20 rounded px-2 py-1 text-xs border border-white/10 outline-none"
+                    className="w-2/3 bg-[var(--surface-muted)] rounded px-2 py-1 text-xs border border-[var(--border)] outline-none"
                 />
             </div>
         </div>
@@ -461,7 +461,7 @@ function PaginationControls({ page, totalPages, onPageChange, pageSize, onPageSi
                 <button
                     onClick={() => onPageChange(page - 1)}
                     disabled={page === 1}
-                    className="p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-30 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] disabled:opacity-30 transition-colors"
                 >
                     <ChevronDown className="h-4 w-4 rotate-90" />
                 </button>
@@ -469,7 +469,7 @@ function PaginationControls({ page, totalPages, onPageChange, pageSize, onPageSi
                 <button
                     onClick={() => onPageChange(page + 1)}
                     disabled={page >= totalPages}
-                    className="p-1.5 rounded-lg hover:bg-white/10 disabled:opacity-30 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] disabled:opacity-30 transition-colors"
                 >
                     <ChevronDown className="h-4 w-4 -rotate-90" />
                 </button>
@@ -506,7 +506,7 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
             >
                 {/* Left: Domain & Meta */}
                 <div className="flex-1 min-w-0 flex items-center gap-4 w-full md:w-auto">
-                    <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center font-bold text-lg border transition-colors ${expanded ? 'bg-[var(--primary-cyan)] text-black border-[var(--primary-cyan)]' : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-[var(--primary-cyan)] border-white/10'}`}>
+                    <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center font-bold text-lg border transition-colors ${expanded ? 'bg-[var(--primary-cyan)] text-black border-[var(--primary-cyan)]' : 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 text-[var(--primary-cyan)] border-[var(--border)]'}`}>
                         {site.root_domain.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -525,7 +525,7 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
                         {site.email && (
                             <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded bg-[var(--primary-cyan)]/10 border border-[var(--primary-cyan)]/20 w-fit max-w-full" title={site.email}>
                                 <Mail className="h-3 w-3 text-[var(--primary-cyan)] shrink-0" />
-                                <span className="text-xs font-medium text-gray-200 truncate">{site.email}</span>
+                                <span className="text-xs font-medium text-[var(--text-primary)] truncate">{site.email}</span>
                             </div>
                         )}
                     </div>
@@ -535,14 +535,14 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
                 <div className="grid grid-cols-3 gap-8 w-full md:w-auto text-center md:text-left">
                     <div className="text-center">
                         <div className="text-lg font-bold text-[var(--primary-cyan)]">{site.da || '-'}</div>
-                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">DA</div>
+                        <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-wider">DA</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-lg font-bold text-gray-300">{formatCompactNumber(site.traffic)}</div>
-                        <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Traffic</div>
+                        <div className="text-lg font-bold text-[var(--text-primary)]">{formatCompactNumber(site.traffic)}</div>
+                        <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-wider">Traffic</div>
                     </div>
                     <div className="text-center hidden lg:block">
-                        <div className="text-lg font-bold text-gray-300">
+                        <div className="text-lg font-bold text-[var(--text-primary)]">
                             {site.lo_created_at ? new Date(site.lo_created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never Used'}
                         </div>
                         <div className="text-[10px] text-[var(--primary-cyan)] uppercase font-bold tracking-wider">Latest Order</div>
@@ -550,15 +550,15 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
                 </div>
 
                 {/* Right: Prices & Actions */}
-                <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-3 md:pt-0 pl-4 border-l-0 md:border-l border-white/10">
+                <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-[var(--border)] pt-3 md:pt-0 pl-4 border-l-0 md:border-l border-[var(--border)]">
                     <div className="flex gap-6">
                         <div className="text-right">
                             <div className="text-lg font-bold text-[var(--primary-cyan)]">${site.gp_price || 0}</div>
-                            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">GP</div>
+                            <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-wider">GP</div>
                         </div>
                         <div className="text-right">
-                            <div className="text-lg font-bold text-gray-300">${site.niche_edit_price || 0}</div>
-                            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Edit</div>
+                            <div className="text-lg font-bold text-[var(--text-primary)]">${site.niche_edit_price || 0}</div>
+                            <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-wider">Edit</div>
                         </div>
                     </div>
 
@@ -566,14 +566,14 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
                         {/* Eye Icon for Modal */}
                         <button
                             onClick={(e) => { e.stopPropagation(); onOpenModal(); }}
-                            className="p-2 rounded-lg hover:bg-white/10 text-[var(--primary-cyan)] hover:text-white transition-colors relative z-20"
+                            className="p-2 rounded-lg hover:bg-[var(--surface-muted)] text-[var(--primary-cyan)] hover:opacity-80 transition-colors relative z-20"
                             title="Quick View / Status"
                         >
                             <Eye className="h-5 w-5 pointer-events-none" />
                         </button>
 
-                        <button className={`p-2 rounded-full transition-transform duration-300 ${expanded ? 'rotate-180 bg-white/10' : 'hover:bg-white/5'}`}>
-                            <ChevronDown className="h-5 w-5 text-gray-400" />
+                        <button className={`p-2 rounded-full transition-transform duration-300 ${expanded ? 'rotate-180 bg-[var(--surface-muted)]' : 'hover:bg-[var(--surface-muted)]'}`}>
+                            <ChevronDown className="h-5 w-5 text-[var(--text-muted)]" />
                         </button>
                     </div>
                 </div>
@@ -581,7 +581,7 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
 
             {/* Expanded Content */}
             {expanded && (
-                <div className="border-t border-[var(--border)] bg-black/20 p-6 animate-in slide-in-from-top-2 fade-in duration-300">
+                <div className="border-t border-[var(--border)] bg-[var(--surface-muted)] p-6 animate-in slide-in-from-top-2 fade-in duration-300">
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-6 gap-x-8 mb-8">
                         <DetailItem label="Domain Rating" value={site.dr} />
                         <DetailItem label="Referring Domains" value={site.rd} />
@@ -621,15 +621,15 @@ function ExpandableSiteRow({ site, onOpenModal, style }) {
 function DetailItem({ label, value, highlight }) {
     return (
         <div>
-            <div className="text-xs text-gray-500 uppercase font-bold tracking-wide mb-1 opacity-70">{label}</div>
-            <div className={`text-sm font-medium ${highlight ? 'text-red-400' : 'text-gray-200'}`}>{value || '-'}</div>
+            <div className="text-xs text-[var(--text-muted)] uppercase font-bold tracking-wide mb-1 opacity-70">{label}</div>
+            <div className={`text-sm font-medium ${highlight ? 'text-red-400' : 'text-[var(--text-primary)]'}`}>{value || '-'}</div>
         </div>
     )
 }
 
-function ActionButton({ icon: Icon, label, color = "text-gray-400" }) {
+function ActionButton({ icon: Icon, label, color = "text-[var(--text-muted)]" }) {
     return (
-        <button className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-white/5 hover:bg-white/5 transition-colors ${color} text-sm font-medium`}>
+        <button className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-muted)] transition-colors ${color} text-sm font-medium`}>
             <Icon className="h-4 w-4" /> {label}
         </button>
     )
@@ -645,9 +645,9 @@ function formatCompactNumber(number) {
 
 function MetricBox({ label, value, color }) {
     return (
-        <div className="p-3 rounded-lg bg-white/5 border border-white/5 text-center">
+        <div className="p-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border)] text-center">
             <div className="text-2xl font-bold mb-1" style={{ color: color || 'white' }}>{formatCompactNumber(value)}</div>
-            <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{label}</div>
+            <div className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-wider">{label}</div>
         </div>
     );
 }
@@ -655,8 +655,8 @@ function MetricBox({ label, value, color }) {
 function InfoRow({ label, value, isLink }) {
     return (
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 py-1">
-            <div className="w-full sm:w-40 font-bold text-gray-400 text-sm shrink-0">{label}</div>
-            <div className="flex-1 text-sm font-medium text-white break-all">
+            <div className="w-full sm:w-40 font-bold text-[var(--text-muted)] text-sm shrink-0">{label}</div>
+            <div className="flex-1 text-sm font-medium text-[var(--text-primary)] break-all">
                 {isLink && value ? (
                     <a href={value} target="_blank" rel="noreferrer" className="text-[var(--primary-cyan)] hover:underline flex items-center gap-1">
                         {value} <ExternalLink className="h-3 w-3" />

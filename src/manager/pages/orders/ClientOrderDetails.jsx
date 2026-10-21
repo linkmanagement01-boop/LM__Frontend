@@ -446,6 +446,28 @@ export const ClientOrderDetails = () => {
                   </div>
                 </div>
 
+                {/* Marketplace: who provides the content + the client's writing brief */}
+                {(d.content_by || d.brief) && (
+                  <div className="mb-4 rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 text-sm">
+                    <p className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">
+                      {d.content_by === 'us' ? 'Content: write it for the client' : d.content_by === 'client' ? 'Content: provided by the client' : 'Client details'}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-[var(--text-secondary)]">
+                      {d.content_by === 'client' && d.doc_url && (
+                        <p className="md:col-span-2">Content file / doc: <a href={d.doc_url} target="_blank" rel="noreferrer" className="text-purple-400 underline break-all">{d.doc_url}</a></p>
+                      )}
+                      {d.brief?.word_count && <p>Word count: <b className="text-[var(--text-primary)]">{d.brief.word_count}</b> ({d.brief.language || 'English'})</p>}
+                      {d.brief?.category && <p>Category: <b className="text-[var(--text-primary)]">{d.brief.category}</b></p>}
+                      {d.brief?.keywords && <p>Keywords: <b className="text-[var(--text-primary)]">{d.brief.keywords}</b></p>}
+                      {d.brief?.target_country && <p>Target audience: <b className="text-[var(--text-primary)]">{d.brief.target_country}</b></p>}
+                      {d.brief?.title_suggestion && <p className="md:col-span-2">Title suggestion: <b className="text-[var(--text-primary)]">{d.brief.title_suggestion}</b></p>}
+                      {d.brief?.reference_url && (
+                        <p className="md:col-span-2">Reference: <a href={d.brief.reference_url} target="_blank" rel="noreferrer" className="text-purple-400 underline break-all">{d.brief.reference_url}</a></p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Editable Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

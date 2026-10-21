@@ -13,6 +13,7 @@ export function WithdrawalRequests() {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'datetime', direction: 'desc' });
     const [expandedRows, setExpandedRows] = useState([]);
+    const [expandedUsers, setExpandedUsers] = useState([]); // users whose grouped requests are opened
 
     // Filter state
     const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -170,6 +171,191 @@ export function WithdrawalRequests() {
                 ? String(aValue).localeCompare(String(bValue))
                 : String(bValue).localeCompare(String(aValue));
         });
+
+    // Group requests by user: a user with several requests gets one collapsible row.
+    // Groups keep the current sort order (a group sits where its first request would be).
+    const groupedWithdrawals = [];
+    const groupByUser = {};
+    for (const w of filteredWithdrawals) {
+        const key = w.user_id || w.user_email;
+        if (!groupByUser[key]) {
+            groupByUser[key] = { key, user_name: w.user_name, user_email: w.user_email, requests: [] };
+            groupedWithdrawals.push(groupByUser[key]);
+        }
+        groupByUser[key].requests.push(w);
+    }
+    const toggleUser = (key) => setExpandedUsers(prev => (prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]));
+
+    // Collapsible row for a user with several requests; their requests are listed under it when opened
+    const renderUserGroup = (group) => {
+        const open = expandedUsers.includes(group.key);
+        const total = group.requests.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+        const dates = group.requests.map(w => new Date(w.datetime || 0)).sort((a, b) => b - a);
+        return (
+            <React.Fragment key={`user-${group.key}`}>
+                <tr
+                    className="transition-colors cursor-pointer"
+                    style={{ borderBottom: '1px solid var(--border)', backgroundColor: open ? 'rgba(249, 115, 22, 0.06)' : undefined }}
+                    onClick={() => toggleUser(group.key)}
+                    title={open ? 'Click to hide requests' : 'Click to see all requests from this user'}
+                >
+                    <td className="px-4 py-4">
+                        <div className="flex items-start gap-2">
+                            <ChevronDown size={18} className="mt-0.5 shrink-0 transition-transform" style={{ color: 'var(--primary-cyan)', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} />
+                            <div>
+                                <p className="font-medium flex items-center gap-2 flex-wrap" style={{ color: 'var(--text-primary)' }}>
+                                    {group.user_name}
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(249, 115, 22, 0.12)', color: 'rgb(234, 88, 12)', border: '1px solid rgba(249, 115, 22, 0.35)' }}>
+                                        {group.requests.length} requests
+                                    </span>
+                                </p>
+                                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{group.user_email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {open ? 'Showing all requests below' : `Click to view all ${group.requests.length} requests`}
+                    </td>
+                    <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>
+                        {group.requests.map(w => w.invoice_number).filter(Boolean).join(', ')}
+                    </td>
+                    <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
+                        <span className="font-semibold">{Number(total.toFixed(2))}</span>
+                        <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>total</span>
+                    </td>
+                    <td className="px-4 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>
+                        <span className="block">Latest: {formatDate(dates[0])}</span>
+                        <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>Oldest: {formatDate(dates[dates.length - 1])}</span>
+                    </td>
+                    <td className="px-4 py-4"></td>
+                </tr>
+                {open && group.requests.map(w => renderRequestRow(w, true))}
+            </React.Fragment>
+        );
+    };
+
+    // One withdrawal request row (also used inside a user's group, then slightly indented)
+    const renderRequestRow = (withdrawal, nested = false) => (
+        <tr key={withdrawal.id}
+            className="hover:bg-opacity-50 transition-colors cursor-pointer"
+            style={{ borderBottom: '1px solid var(--border)', ...(nested ? { backgroundColor: 'var(--background-dark)' } : {}) }}
+            onClick={() => toggleExpand(withdrawal.id)}
+        >
+            <td className="px-4 py-4" style={nested ? { borderLeft: '3px solid var(--primary-cyan)', paddingLeft: '2rem' } : undefined}>
+                <div>
+                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{withdrawal.user_name}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{withdrawal.user_email}</p>
+                </div>
+            </td>
+            <td className="px-4 py-4">
+                {/* Priority: Check payment_method field first */}
+                {(withdrawal.payment_method === 'bank' || withdrawal.payment_method?.includes('bank')) ? (
+                    <div>
+                        <span
+                            className="px-2 py-1 rounded text-xs font-medium"
+                            style={{
+                                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                                color: 'rgb(249, 115, 22)',
+                                border: '1px solid rgb(249, 115, 22)'
+                            }}
+                        >
+                            Bank Details
+                        </span>
+                        <div className="mt-2 text-sm space-y-0.5" style={{ color: 'var(--text-secondary)' }}>
+                            {withdrawal.bank_type && <p><strong>Bank Type:-</strong> {withdrawal.bank_type}</p>}
+                            {withdrawal.beneficiary_account_number && <p><strong>Beneficiary Account Number:-</strong> {withdrawal.beneficiary_account_number}</p>}
+                            {withdrawal.beneficiary_name && <p><strong>Beneficiary Name:-</strong> {withdrawal.beneficiary_name}</p>}
+                            {withdrawal.customer_reference_number && <p><strong>Customer Reference Number:-</strong> {withdrawal.customer_reference_number}</p>}
+                            {withdrawal.bene_bank_name && <p><strong>Beneficiary Bank Name:-</strong> {withdrawal.bene_bank_name}</p>}
+                            {withdrawal.bene_bank_branch_name && <p><strong>Beneficiary Bank Branch Name:-</strong> {withdrawal.bene_bank_branch_name}</p>}
+                            {withdrawal.ifsc_code && <p><strong>IFSC Code:-</strong> {withdrawal.ifsc_code}</p>}
+                            {withdrawal.beneficiary_email_id && <p><strong>Beneficiary Email id:-</strong> {withdrawal.beneficiary_email_id}</p>}
+                        </div>
+                    </div>
+                ) : withdrawal.payment_method === 'upi' ? (
+                    <div>
+                        <span
+                            className="px-2 py-1 rounded text-xs font-medium"
+                            style={{
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                color: 'rgb(168, 85, 247)',
+                                border: '1px solid rgb(168, 85, 247)'
+                            }}
+                        >
+                            UPI ID
+                        </span>
+                        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                            {withdrawal.upi_id || '-'}
+                        </p>
+                    </div>
+                ) : withdrawal.payment_method === 'qr' ? (
+                    <div>
+                        <span
+                            className="px-2 py-1 rounded text-xs font-medium"
+                            style={{
+                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                color: 'rgb(34, 197, 94)',
+                                border: '1px solid rgb(34, 197, 94)'
+                            }}
+                        >
+                            QR Code
+                        </span>
+                        {withdrawal.qr_code_image ? (
+                            <img
+                                src={(withdrawal.qr_code_image.startsWith('http') || withdrawal.qr_code_image.startsWith('data:')) ? withdrawal.qr_code_image : `http://localhost:5001${withdrawal.qr_code_image}`}
+                                alt="QR Code"
+                                className="mt-2 w-20 h-20 object-cover rounded border cursor-pointer hover:scale-150 transition-transform"
+                                style={{ borderColor: 'var(--border)' }}
+                                onClick={() => window.open((withdrawal.qr_code_image.startsWith('http') || withdrawal.qr_code_image.startsWith('data:')) ? withdrawal.qr_code_image : `http://localhost:5001${withdrawal.qr_code_image}`, '_blank')}
+                            />
+                        ) : (
+                            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>No QR image</p>
+                        )}
+                    </div>
+                ) : (withdrawal.payment_method === 'paypal' || withdrawal.payment_method === 'paypal_id' || withdrawal.paypal_email) ? (
+                    <div>
+                        <span
+                            className="px-2 py-1 rounded text-xs font-medium"
+                            style={{
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                color: 'rgb(59, 130, 246)',
+                                border: '1px solid rgb(59, 130, 246)'
+                            }}
+                        >
+                            Paypal ID
+                        </span>
+                        <p className="text-sm mt-1 break-all" style={{ color: 'var(--text-secondary)' }}>
+                            {withdrawal.paypal_email || '-'}
+                        </p>
+                    </div>
+                ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>-</span>
+                )}
+            </td>
+            <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
+                {withdrawal.invoice_number}
+            </td>
+            <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
+                {withdrawal.amount}
+            </td>
+            <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
+                {formatDate(withdrawal.datetime)}
+            </td>
+            <td className="px-4 py-4">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/admin/wallet/withdrawal-requests/${withdrawal.id}`);
+                    }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:opacity-80"
+                    style={{ backgroundColor: 'var(--warning)', color: 'white' }}
+                    title="View Details"
+                >
+                    <Eye size={16} />
+                </button>
+            </td>
+        </tr>
+    );
 
     const SortIcon = ({ column }) => {
         if (sortConfig.key !== column) return <ChevronDown size={14} className="opacity-30" />;
@@ -372,129 +558,9 @@ export function WithdrawalRequests() {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredWithdrawals.map((withdrawal) => (
-                                    <React.Fragment key={withdrawal.id}>
-                                        <tr
-                                            className="hover:bg-opacity-50 transition-colors cursor-pointer"
-                                            style={{ borderBottom: '1px solid var(--border)' }}
-                                            onClick={() => toggleExpand(withdrawal.id)}
-                                        >
-                                            <td className="px-4 py-4">
-                                                <div>
-                                                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{withdrawal.user_name}</p>
-                                                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{withdrawal.user_email}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                {/* Priority: Check payment_method field first */}
-                                                {(withdrawal.payment_method === 'bank' || withdrawal.payment_method?.includes('bank')) ? (
-                                                    <div>
-                                                        <span
-                                                            className="px-2 py-1 rounded text-xs font-medium"
-                                                            style={{
-                                                                backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                                                                color: 'rgb(249, 115, 22)',
-                                                                border: '1px solid rgb(249, 115, 22)'
-                                                            }}
-                                                        >
-                                                            Bank Details
-                                                        </span>
-                                                        <div className="mt-2 text-sm space-y-0.5" style={{ color: 'var(--text-secondary)' }}>
-                                                            {withdrawal.bank_type && <p><strong>Bank Type:-</strong> {withdrawal.bank_type}</p>}
-                                                            {withdrawal.beneficiary_account_number && <p><strong>Beneficiary Account Number:-</strong> {withdrawal.beneficiary_account_number}</p>}
-                                                            {withdrawal.beneficiary_name && <p><strong>Beneficiary Name:-</strong> {withdrawal.beneficiary_name}</p>}
-                                                            {withdrawal.customer_reference_number && <p><strong>Customer Reference Number:-</strong> {withdrawal.customer_reference_number}</p>}
-                                                            {withdrawal.bene_bank_name && <p><strong>Beneficiary Bank Name:-</strong> {withdrawal.bene_bank_name}</p>}
-                                                            {withdrawal.bene_bank_branch_name && <p><strong>Beneficiary Bank Branch Name:-</strong> {withdrawal.bene_bank_branch_name}</p>}
-                                                            {withdrawal.ifsc_code && <p><strong>IFSC Code:-</strong> {withdrawal.ifsc_code}</p>}
-                                                            {withdrawal.beneficiary_email_id && <p><strong>Beneficiary Email id:-</strong> {withdrawal.beneficiary_email_id}</p>}
-                                                        </div>
-                                                    </div>
-                                                ) : withdrawal.payment_method === 'upi' ? (
-                                                    <div>
-                                                        <span
-                                                            className="px-2 py-1 rounded text-xs font-medium"
-                                                            style={{
-                                                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                                                                color: 'rgb(168, 85, 247)',
-                                                                border: '1px solid rgb(168, 85, 247)'
-                                                            }}
-                                                        >
-                                                            UPI ID
-                                                        </span>
-                                                        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                                                            {withdrawal.upi_id || '-'}
-                                                        </p>
-                                                    </div>
-                                                ) : withdrawal.payment_method === 'qr' ? (
-                                                    <div>
-                                                        <span
-                                                            className="px-2 py-1 rounded text-xs font-medium"
-                                                            style={{
-                                                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                                                                color: 'rgb(34, 197, 94)',
-                                                                border: '1px solid rgb(34, 197, 94)'
-                                                            }}
-                                                        >
-                                                            QR Code
-                                                        </span>
-                                                        {withdrawal.qr_code_image ? (
-                                                            <img
-                                                                src={(withdrawal.qr_code_image.startsWith('http') || withdrawal.qr_code_image.startsWith('data:')) ? withdrawal.qr_code_image : `http://localhost:5001${withdrawal.qr_code_image}`}
-                                                                alt="QR Code"
-                                                                className="mt-2 w-20 h-20 object-cover rounded border cursor-pointer hover:scale-150 transition-transform"
-                                                                style={{ borderColor: 'var(--border)' }}
-                                                                onClick={() => window.open((withdrawal.qr_code_image.startsWith('http') || withdrawal.qr_code_image.startsWith('data:')) ? withdrawal.qr_code_image : `http://localhost:5001${withdrawal.qr_code_image}`, '_blank')}
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>No QR image</p>
-                                                        )}
-                                                    </div>
-                                                ) : (withdrawal.payment_method === 'paypal' || withdrawal.payment_method === 'paypal_id' || withdrawal.paypal_email) ? (
-                                                    <div>
-                                                        <span
-                                                            className="px-2 py-1 rounded text-xs font-medium"
-                                                            style={{
-                                                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                                                color: 'rgb(59, 130, 246)',
-                                                                border: '1px solid rgb(59, 130, 246)'
-                                                            }}
-                                                        >
-                                                            Paypal ID
-                                                        </span>
-                                                        <p className="text-sm mt-1 break-all" style={{ color: 'var(--text-secondary)' }}>
-                                                            {withdrawal.paypal_email || '-'}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <span style={{ color: 'var(--text-muted)' }}>-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
-                                                {withdrawal.invoice_number}
-                                            </td>
-                                            <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
-                                                {withdrawal.amount}
-                                            </td>
-                                            <td className="px-4 py-4" style={{ color: 'var(--text-primary)' }}>
-                                                {formatDate(withdrawal.datetime)}
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/admin/wallet/withdrawal-requests/${withdrawal.id}`);
-                                                    }}
-                                                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:opacity-80"
-                                                    style={{ backgroundColor: 'var(--warning)', color: 'white' }}
-                                                    title="View Details"
-                                                >
-                                                    <Eye size={16} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </React.Fragment>
-                                ))
+                                groupedWithdrawals.map((group) => group.requests.length === 1
+                                    ? renderRequestRow(group.requests[0])
+                                    : renderUserGroup(group))
                             )}
                         </tbody>
                         <tfoot>
