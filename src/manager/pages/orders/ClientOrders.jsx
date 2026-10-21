@@ -170,6 +170,13 @@ export const ClientOrders = () => {
                       <div className="flex items-center gap-3 mb-1.5">
                         <h3 className="font-bold text-[var(--text-primary)] text-lg">{order.order_type}</h3>
                         {getStatusBadge(order)}
+                        {order.marketplace && (
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                            style={{ backgroundColor: 'rgba(124,58,237,0.10)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.30)' }}
+                            title="Placed by a client on the marketplace">
+                            {order.marketplace === 'whitelabel' ? 'White-label Marketplace' : `${order.marketplace} Marketplace`}
+                          </span>
+                        )}
                         {order.fill_details ? (
                           <span className="text-[10px] uppercase px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-bold tracking-wider">Self-Filled</span>
                         ) : (

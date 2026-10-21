@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../components/ModernSidebar';
-import { LayoutGrid, CreditCard, Globe, Upload, ShoppingBag, MessageCircle } from 'lucide-react';
+import { LayoutGrid, CreditCard, Globe, Upload, ShoppingBag, MessageCircle, BookOpen } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { NotificationsPanel } from './components/NotificationsPanel.jsx';
 import api, { authAPI } from '../lib/api';
@@ -79,6 +79,7 @@ export function BloggerLayout() {
     { icon: <Upload size={20} />, label: 'Bulk Sites', to: `${base}/bulk-sites`, active: pathname.startsWith(`${base}/bulk-sites`), permissionKey: 'bulk_sites' },
     { icon: <ShoppingBag size={20} />, label: 'Orders', to: `${base}/orders`, active: pathname.startsWith(`${base}/orders`), permissionKey: 'orders' },
     { icon: <MessageCircle size={20} />, label: 'Threads', to: `${base}/threads`, active: pathname.startsWith(`${base}/threads`), permissionKey: 'threads' },
+    { icon: <BookOpen size={20} />, label: 'Guides', to: `${base}/guides`, active: pathname.startsWith(`${base}/guides`), permissionKey: null },
   ], [pathname, base]);
 
   const navItems = useMemo(() => {

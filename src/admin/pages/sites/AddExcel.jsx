@@ -170,7 +170,7 @@ export function AddExcel() {
 
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-3">
+            <h2 className="text-2xl font-bold mb-6 text-[var(--text-primary)] flex items-center gap-3">
                 <FileSpreadsheet className="text-green-500" /> Bulk Import Sites
             </h2>
 
@@ -193,7 +193,7 @@ export function AddExcel() {
                         <div className="flex-1">
                             <label className="block text-[var(--text-secondary)] mb-4 font-medium">Select Excel File</label>
 
-                            <div className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 flex flex-col items-center justify-center hover:border-[var(--primary-cyan)] transition-colors cursor-pointer relative bg-black/20">
+                            <div className="border-2 border-dashed border-[var(--border)] rounded-xl p-8 flex flex-col items-center justify-center hover:border-[var(--primary-cyan)] transition-colors cursor-pointer relative bg-[var(--surface-muted)]">
                                 <input
                                     type="file"
                                     accept=".xlsx,.xls"
@@ -235,7 +235,7 @@ export function AddExcel() {
 
                         {/* Instructions */}
                         <div className="w-full md:w-80 bg-[var(--background-dark)] rounded-xl p-6 h-fit border border-[var(--border)]">
-                            <h4 className="font-bold text-white mb-4">Instructions</h4>
+                            <h4 className="font-bold text-[var(--text-primary)] mb-4">Instructions</h4>
                             <ul className="space-y-3 text-sm text-[var(--text-secondary)] list-disc pl-4">
                                 <li>Use the official formatted template.</li>
                                 <li><strong>Root Domain</strong> is required.</li>
@@ -252,7 +252,7 @@ export function AddExcel() {
                 <div className="bg-[var(--card-background)] border border-[var(--border)] rounded-xl overflow-hidden">
                     <div className="p-6 border-b border-[var(--border)] flex items-center justify-between bg-[var(--background-dark)]">
                         <div>
-                            <h3 className="text-lg font-bold text-white">Import Preview</h3>
+                            <h3 className="text-lg font-bold text-[var(--text-primary)]">Import Preview</h3>
                             <p className="text-[var(--text-muted)] text-sm mt-1">
                                 Found <span className="text-green-400 font-bold">{validSites.length}</span> new sites and <span className="text-orange-400 font-bold">{conflicts.length}</span> conflicts.
                             </p>
@@ -284,7 +284,7 @@ export function AddExcel() {
                                         <AlertTriangle size={18} /> Resolve Duplicates ({conflicts.length})
                                     </h4>
                                     <div className="flex gap-2">
-                                        <button onClick={() => applyResolutionToAll('IGNORE')} className="text-xs px-3 py-1.5 bg-gray-700/50 hover:bg-gray-700 rounded text-gray-300 transition-colors">Keep All Existing</button>
+                                        <button onClick={() => applyResolutionToAll('IGNORE')} className="text-xs px-3 py-1.5 bg-[var(--surface-muted)] hover:bg-[var(--color-border)] rounded text-[var(--text-secondary)] transition-colors">Keep All Existing</button>
                                         <button onClick={() => applyResolutionToAll('ADD')} className="text-xs px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded transition-colors">Add All as Duplicate</button>
                                         <button onClick={() => applyResolutionToAll('REPLACE')} className="text-xs px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded transition-colors">Replace All</button>
                                     </div>
@@ -303,7 +303,7 @@ export function AddExcel() {
                                         <tbody className="divide-y divide-[var(--border)]">
                                             {conflicts.map((conflict, idx) => (
                                                 <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-3 font-medium text-white">
+                                                    <td className="p-3 font-medium text-[var(--text-primary)]">
                                                         <a href={`https://${conflict.newSite.root_domain}`} target="_blank" rel="noreferrer" className="text-[var(--primary-cyan)] hover:underline flex items-center gap-1">
                                                             {conflict.newSite.root_domain}
                                                             <span className="text-xs opacity-60">↗</span>
@@ -322,24 +322,24 @@ export function AddExcel() {
                                                         </div>
                                                     </td>
                                                     <td className="p-3">
-                                                        <div className="flex bg-black/40 rounded-lg p-1 border border-[var(--border)]">
+                                                        <div className="flex bg-[var(--surface-muted)] rounded-lg p-1 border border-[var(--border)]">
                                                             <button
                                                                 onClick={() => updateResolution(idx, 'IGNORE')}
-                                                                className={`flex-1 py-1.5 px-2 rounded text-xs transition-colors ${conflict.resolution === 'IGNORE' ? 'bg-gray-600 text-white' : 'text-[var(--text-muted)] hover:text-white'}`}
+                                                                className={`flex-1 py-1.5 px-2 rounded text-xs transition-colors ${conflict.resolution === 'IGNORE' ? 'bg-gray-600 text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                                                                 title="Keep Existing (Skip New)"
                                                             >
                                                                 Skip
                                                             </button>
                                                             <button
                                                                 onClick={() => updateResolution(idx, 'ADD')}
-                                                                className={`flex-1 py-1.5 px-2 rounded text-xs transition-colors ${conflict.resolution === 'ADD' ? 'bg-blue-600 text-white' : 'text-[var(--text-muted)] hover:text-white'}`}
+                                                                className={`flex-1 py-1.5 px-2 rounded text-xs transition-colors ${conflict.resolution === 'ADD' ? 'bg-blue-600 text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                                                                 title="Keep Both (Create Duplicate)"
                                                             >
                                                                 Add
                                                             </button>
                                                             <button
                                                                 onClick={() => updateResolution(idx, 'REPLACE')}
-                                                                className={`flex-1 py-1.5 px-2 rounded text-xs transition-colors ${conflict.resolution === 'REPLACE' ? 'bg-red-600 text-white' : 'text-[var(--text-muted)] hover:text-white'}`}
+                                                                className={`flex-1 py-1.5 px-2 rounded text-xs transition-colors ${conflict.resolution === 'REPLACE' ? 'bg-red-600 text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                                                                 title="Delete Old, Add New"
                                                             >
                                                                 Replace
@@ -373,7 +373,7 @@ export function AddExcel() {
                     <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
                         <Check className="text-green-500 w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Import Complete</h3>
+                    <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Import Complete</h3>
                     <div className="grid grid-cols-3 gap-8 my-6 text-center">
                         <div>
                             <div className="text-2xl font-bold text-green-400">{resultStats.inserted}</div>
@@ -384,7 +384,7 @@ export function AddExcel() {
                             <div className="text-xs uppercase tracking-wider text-[var(--text-muted)]">Replaced</div>
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-gray-400">{resultStats.ignored}</div>
+                            <div className="text-2xl font-bold text-[var(--text-muted)]">{resultStats.ignored}</div>
                             <div className="text-xs uppercase tracking-wider text-[var(--text-muted)]">Skipped</div>
                         </div>
                     </div>

@@ -15,7 +15,7 @@ export function PaymentHistory() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'clearance_date', direction: 'desc' }); // newest cleared first
     const [selectedRows, setSelectedRows] = useState(new Set());
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -558,11 +558,11 @@ export function PaymentHistory() {
                                 <th
                                     className="text-left px-4 py-3 font-medium cursor-pointer"
                                     style={{ color: 'var(--text-secondary)', width: '35%' }}
-                                    onClick={() => handleSort('created_at')}
+                                    onClick={() => handleSort('clearance_date')}
                                 >
                                     <div className="flex items-center gap-2">
                                         Date & Remarks
-                                        <SortIcon column="created_at" />
+                                        <SortIcon column="clearance_date" />
                                     </div>
                                 </th>
 

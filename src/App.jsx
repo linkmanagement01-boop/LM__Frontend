@@ -11,6 +11,7 @@ import { ReportingLayout as AdminReportingLayout } from './admin/pages/reports/R
 import { AdminOrders } from './admin/pages/orders/AdminOrders.jsx';
 import { AdminOrderDetails } from './admin/pages/orders/AdminOrderDetails.jsx';
 import { PriceCharts as AdminPriceCharts } from './admin/pages/PriceCharts.jsx';
+import { MarketplacePricing as AdminMarketplacePricing } from './admin/pages/MarketplacePricing.jsx';
 import { Bloggers as AdminBloggers } from './admin/pages/Bloggers.jsx';
 import { BloggerPerformance as AdminBloggerPerformance } from './admin/pages/BloggerPerformance.jsx';
 import { TeamMembers as AdminTeamMembers } from './admin/pages/TeamMembers.jsx';
@@ -63,6 +64,7 @@ import { BulkSites } from './blogger/pages/BulkSites.jsx';
 import { Profile as BloggerProfile } from './blogger/pages/Profile.jsx';
 import { UpdateProfile as BloggerUpdateProfile } from './blogger/pages/UpdateProfile.jsx';
 import { ChangePassword as BloggerChangePassword } from './blogger/pages/ChangePassword.jsx';
+import { Guides as BloggerGuides } from './blogger/pages/Guides.jsx';
 import { WriterLayout } from './writer/Layout.jsx';
 import { Dashboard as WriterDashboard } from './writer/pages/Dashboard.jsx';
 import { CompletedOrders as WriterCompleted } from './writer/pages/CompletedOrders.jsx';
@@ -104,6 +106,7 @@ function App() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="orders/:id" element={<AdminOrderDetails />} />
           <Route path="price-charts" element={<AdminPriceCharts />} />
+          <Route path="marketplace-pricing" element={<AdminMarketplacePricing />} />
           <Route path="team-members" element={<AdminTeamMembers />} />
           <Route path="team-members/add" element={<AddTeamMember />} />
           <Route path="users/:id/permissions" element={<AdminUserPermissions />} />
@@ -147,6 +150,7 @@ function App() {
           <Route path="orders" element={<BloggerOrders />} />
           <Route path="orders/:id" element={<BloggerOrderDetails />} />
           <Route path="threads" element={<BloggerThreads />} />
+          <Route path="guides" element={<BloggerGuides />} />
           {/* Payments */}
           <Route path="payments/fill-details" element={<FillPaymentDetails />} />
           <Route path="payments/invoices" element={<InvoiceList />} />

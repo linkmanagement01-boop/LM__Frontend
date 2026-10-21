@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Upload, XCircle, CheckCircle, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Send, Upload, XCircle, CheckCircle, RefreshCw, AlertTriangle, Sparkles } from 'lucide-react';
 import { writerAPI } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useAutoSave, AutoSaveIndicator } from '../../hooks/useAutoSave';
+
+// Marks a field that still holds the AI's suggested text
+const AiTag = () => (
+    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 align-middle">
+        <Sparkles className="w-3 h-3" />AI
+    </span>
+);
 
 export function OrderAddedDetails() {
     const { id } = useParams();
@@ -139,6 +146,58 @@ export function OrderAddedDetails() {
             updated[index] = { ...updated[index], [field]: value };
             return updated;
         });
+    };
+
+    // ===== AI suggestions for Niche Edit (fills empty fields only; the writer can edit everything) =====
+    const [suggestions, setSuggestions] = useState({}); // detail id → { loading } | suggestion from the API
+    const suggestStarted = useRef(false);
+
+    // Put a suggestion into the site's fields – only where the writer hasn't typed anything (unless force)
+    // On Regenerate, fields still holding the previous AI text are refreshed too; anything the writer typed is kept
+    const applySuggestion = (detailId, s, previous = null) => {
+        if (!s || s.status !== 'ok') return;
+        const prevText = { replace_with: previous?.replace_text, replace_statement: previous?.replace_new, insert_after: previous?.insert_after, insert_statement: previous?.insert_new };
+        setWebsiteSubmissions(prev => prev.map(site => {
+            if (site.id !== detailId) return site;
+            const fill = (field, value) => {
+                const cur = String(site[field] || '').trim();
+                return !cur || (prevText[field] && cur === String(prevText[field]).trim()) ? value : site[field];
+            };
+            return {
+                ...site,
+                replace_with: fill('replace_with', s.replace_text),
+                replace_statement: fill('replace_statement', s.replace_new),
+                insert_after: fill('insert_after', s.insert_after),
+                insert_statement: fill('insert_statement', s.insert_new)
+            };
+        }));
+    };
+
+    const loadSuggestion = async (detailId, regenerate = false) => {
+        const previous = suggestions[detailId];
+        setSuggestions(prev => ({ ...prev, [detailId]: { ...(prev[detailId] || {}), loading: true } }));
+        try {
+            const { suggestion } = await writerAPI.getNicheSuggestion(id, detailId, regenerate);
+            setSuggestions(prev => ({ ...prev, [detailId]: suggestion }));
+            applySuggestion(detailId, suggestion, regenerate ? previous : null);
+        } catch (err) {
+            setSuggestions(prev => ({ ...prev, [detailId]: { status: 'failed', message: err.response?.data?.message || 'AI suggestion failed – please fill in manually.' } }));
+        }
+    };
+
+    // Option A: run automatically once when a Niche Edit order opens (saved suggestions come back free)
+    useEffect(() => {
+        if (loading || !isNicheEdit || suggestStarted.current || websiteSubmissions.length === 0) return;
+        suggestStarted.current = true;
+        const ids = websiteSubmissions.map(s => s.id);
+        let next = 0;
+        const worker = async () => { while (next < ids.length) await loadSuggestion(ids[next++]); };
+        Promise.all([worker(), worker(), worker()]); // 3 at a time
+    }, [loading, isNicheEdit, websiteSubmissions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const regenerateSuggestion = (detailId) => {
+        if (!window.confirm('Make a new AI suggestion for this site?\n\nFields you edited yourself are kept; the rest get the new suggestion. Costs about 1 cent.')) return;
+        loadSuggestion(detailId, true);
     };
 
     const handleFileClick = (siteId) => {
@@ -415,6 +474,31 @@ export function OrderAddedDetails() {
                                         {/* ===== NICHE EDIT SPECIFIC FIELDS ===== */}
                                         {isNicheEdit && (
                                             <>
+                                                {/* AI suggestion status */}
+                                                {(() => {
+                                                    const s = suggestions[site.id];
+                                                    if (!s) return null;
+                                                    const ok = s.status === 'ok';
+                                                    return (
+                                                        <div className={`flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-sm ${s.loading ? 'border-violet-200 bg-violet-50 text-violet-700'
+                                                            : ok ? 'border-violet-200 bg-violet-50 text-violet-800' : 'border-amber-200 bg-amber-50 text-amber-800'}`}>
+                                                            {s.loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : ok ? <Sparkles className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                                                            <span className="flex-1 min-w-[200px]">
+                                                                {s.loading ? 'AI is reading the post and writing suggestions…'
+                                                                    : ok ? 'AI suggestions filled in for both action types – check and edit them before submitting.'
+                                                                        : (s.message || 'No suggestion – please fill in manually.')}
+                                                                {ok && s.message && <span className="block mt-1 text-amber-700 font-medium">⚠ {s.message}</span>}
+                                                            </span>
+                                                            {!s.loading && s.status !== 'limit' && (
+                                                                <button type="button" onClick={() => regenerateSuggestion(site.id)}
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-white/70">
+                                                                    <RefreshCw className="w-3.5 h-3.5" />{ok ? 'Regenerate' : 'Try again'}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
+
                                                 {/* Options Dropdown */}
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                                                     <label className="text-sm font-medium text-[var(--text-secondary)]">
@@ -439,7 +523,7 @@ export function OrderAddedDetails() {
                                                         <div className="space-y-4">
                                                             <div>
                                                                 <label className="text-sm font-semibold text-[var(--text-main)] mb-2 block">
-                                                                    Text to Replace <span className="text-[var(--error)]">*</span>
+                                                                    Text to Replace <span className="text-[var(--error)]">*</span> {suggestions[site.id]?.status === 'ok' && site.replace_with && site.replace_with === suggestions[site.id].replace_text && <AiTag />}
                                                                 </label>
                                                                 <textarea
                                                                     value={site.replace_with}
@@ -452,7 +536,7 @@ export function OrderAddedDetails() {
                                                             </div>
                                                             <div>
                                                                 <label className="text-sm font-semibold text-[var(--text-main)] mb-2 block">
-                                                                    New Content <span className="text-[var(--error)]">*</span>
+                                                                    New Content <span className="text-[var(--error)]">*</span> {suggestions[site.id]?.status === 'ok' && site.replace_statement && site.replace_statement === suggestions[site.id].replace_new && <AiTag />}
                                                                 </label>
                                                                 <textarea
                                                                     value={site.replace_statement}
@@ -474,7 +558,7 @@ export function OrderAddedDetails() {
                                                         <div className="space-y-4">
                                                             <div>
                                                                 <label className="text-sm font-semibold text-[var(--text-main)] mb-2 block">
-                                                                    Insert After <span className="text-[var(--error)]">*</span>
+                                                                    Insert After <span className="text-[var(--error)]">*</span> {suggestions[site.id]?.status === 'ok' && site.insert_after && site.insert_after === suggestions[site.id].insert_after && <AiTag />}
                                                                 </label>
                                                                 <textarea
                                                                     value={site.insert_after}
@@ -487,7 +571,7 @@ export function OrderAddedDetails() {
                                                             </div>
                                                             <div>
                                                                 <label className="text-sm font-semibold text-[var(--text-main)] mb-2 block">
-                                                                    New Statement <span className="text-[var(--error)]">*</span>
+                                                                    New Statement <span className="text-[var(--error)]">*</span> {suggestions[site.id]?.status === 'ok' && site.insert_statement && site.insert_statement === suggestions[site.id].insert_new && <AiTag />}
                                                                 </label>
                                                                 <textarea
                                                                     value={site.insert_statement}
