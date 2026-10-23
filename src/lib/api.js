@@ -176,8 +176,9 @@ export const adminAPI = {
     const response = await api.get('/admin/marketplace/pricing', { params: { marketplace } });
     return response.data;
   },
-  saveMarketplacePricing: async (marketplace, rules) => {
-    const response = await api.put('/admin/marketplace/pricing', { marketplace, rules });
+  // kind: 'normal' (Guest Post / Niche Edit prices) or 'fc' (FC prices)
+  saveMarketplacePricing: async (marketplace, rules, kind = 'normal') => {
+    const response = await api.put('/admin/marketplace/pricing', { marketplace, rules, kind });
     return response.data;
   },
 
