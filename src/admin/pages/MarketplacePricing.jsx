@@ -25,7 +25,10 @@ export function MarketplacePricing() {
     const { showSuccess, showError } = useToast();
     const [marketplace, setMarketplace] = useState('whitelabel');
     const [marketplaces, setMarketplaces] = useState(['whitelabel']);
-    const [rules, setRules] = useState([]);
+    const [kind, setKind] = useState('normal'); // 'normal' | 'fc'
+    const [rulesByKind, setRulesByKind] = useState({ normal: [], fc: [] });
+    const rules = rulesByKind[kind];
+    const setRules = (next) => setRulesByKind(prev => ({ ...prev, [kind]: typeof next === 'function' ? next(prev[kind]) : next }));
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -34,7 +37,8 @@ export function MarketplacePricing() {
             setLoading(true);
             const data = await adminAPI.getMarketplacePricing(mp);
             setMarketplaces(data.marketplaces || ['whitelabel']);
-            setRules((data.rules || []).map(r => ({ ...r, max_price: r.max_price === null ? '' : r.max_price })));
+            const toRows = (list) => (list || []).map(r => ({ ...r, max_price: r.max_price === null ? '' : r.max_price }));
+            setRulesByKind({ normal: toRows(data.rules), fc: toRows(data.fc_rules) });
         } catch (err) {
             showError(err.message || 'Failed to load prices');
         } finally {
@@ -56,9 +60,9 @@ export function MarketplacePricing() {
             setSaving(true);
             const data = await adminAPI.saveMarketplacePricing(marketplace, rules.map(r => ({
                 min_price: r.min_price, max_price: r.max_price === '' ? null : r.max_price, mode: r.mode, value: r.value
-            })));
+            })), kind);
             setRules((data.rules || []).map(r => ({ ...r, max_price: r.max_price === null ? '' : r.max_price })));
-            showSuccess('Marketplace prices saved – new prices show on the marketplace right away');
+            showSuccess(`${kind === 'fc' ? 'FC prices' : 'Marketplace prices'} saved – new prices show on the marketplace right away`);
         } catch (err) {
             showError(err.message || 'Failed to save prices');
         } finally {
@@ -78,6 +82,19 @@ export function MarketplacePricing() {
                     </h2>
                     <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
                         Set what clients pay on the marketplace, based on the blogger's price. Applied to both Guest Post and Niche Edit prices.
+                    </p>
+                    <div className="inline-flex mt-4 p-1 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)]">
+                        {[['normal', 'Normal prices'], ['fc', 'FC prices']].map(([k, label]) => (
+                            <button key={k} onClick={() => setKind(k)}
+                                className={`px-4 py-1.5 rounded-md text-sm font-semibold transition-colors ${kind === k ? 'bg-white shadow-sm text-[var(--text-primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                        {kind === 'fc'
+                            ? "FC prices use each site's FC Guest Post / FC Niche Edit price, and are shown when a client turns FC on."
+                            : "Normal prices use each site's Guest Post / Niche Edit price (FC off – the default)."}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -124,7 +141,7 @@ export function MarketplacePricing() {
                             <Plus className="h-4 w-4" /> Add price range
                         </button>
                         <button onClick={save} disabled={saving || loading} className="premium-btn premium-btn-primary px-5 py-2 disabled:opacity-60">
-                            <Save className="h-4 w-4" /> {saving ? 'Saving…' : 'Save prices'}
+                            <Save className="h-4 w-4" /> {saving ? 'Saving…' : kind === 'fc' ? 'Save FC prices' : 'Save prices'}
                         </button>
                     </div>
                     <p className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
@@ -135,11 +152,11 @@ export function MarketplacePricing() {
 
                 {/* Live preview */}
                 <div className="premium-card p-5">
-                    <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Preview</h3>
+                    <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Preview{kind === 'fc' ? ' – FC prices' : ''}</h3>
                     <table className="w-full text-sm">
                         <thead>
                             <tr style={{ color: 'var(--text-muted)' }}>
-                                <th className="text-left pb-2 font-medium">Blogger price</th>
+                                <th className="text-left pb-2 font-medium">{kind === 'fc' ? 'Blogger FC price' : 'Blogger price'}</th>
                                 <th className="text-right pb-2 font-medium">Client pays</th>
                             </tr>
                         </thead>
