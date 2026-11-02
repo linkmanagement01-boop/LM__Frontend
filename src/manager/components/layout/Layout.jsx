@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../../../components/ModernSidebar'; // Adjust path as needed, likely ../../../components/ModernSidebar
-import { Home, Package, Clock, AlertTriangle, MessageSquare, Globe, User, Users } from 'lucide-react';
+import { Home, Package, Clock, AlertTriangle, MessageSquare, Globe, User, Users, MessagesSquare } from 'lucide-react';
+import { supportAPI } from '../../../lib/api';
+import { useTrafficSuggestionCount } from '../../../components/TrafficSuggestions';
+
+const MARKETPLACE_ON = import.meta.env.VITE_MARKETPLACE_ENABLED === 'true';
 import { useAuth } from '../../../auth/AuthContext.jsx'; // Adjust path if needed
 import { authAPI } from '../../../lib/api';
 
@@ -53,6 +57,19 @@ export const Layout = ({ children }) => {
     navigate('/login');
   };
 
+  // Client chats waiting for a reply (marketplace support inbox)
+  const [supportUnread, setSupportUnread] = useState(0);
+  useEffect(() => {
+    if (!MARKETPLACE_ON) return undefined;
+    const load = () => supportAPI.unread().then(d => setSupportUnread(d.unread || 0)).catch(() => {});
+    load();
+    const t = setInterval(load, 30000);
+    window.addEventListener('support:unread-changed', load);
+    return () => { clearInterval(t); window.removeEventListener('support:unread-changed', load); };
+  }, []);
+
+  const suggestionCount = useTrafficSuggestionCount('manager');
+
   const allNavItems = useMemo(() => [
     {
       icon: <Home size={18} />,
@@ -98,6 +115,18 @@ export const Layout = ({ children }) => {
         { label: 'Writers', to: '/manager/rejected/writers' }
       ]
     },
+    ...(MARKETPLACE_ON ? [{
+      icon: <MessagesSquare size={18} />,
+      label: (
+        <span className="inline-flex items-center gap-2">
+          Client Messages
+          {supportUnread > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold grid place-items-center">{supportUnread}</span>}
+        </span>
+      ),
+      to: '/manager/client-messages',
+      active: location.pathname === '/manager/client-messages',
+      permissionKey: null
+    }] : []),
     {
       icon: <MessageSquare size={18} />,
       label: 'Threads',
@@ -114,6 +143,7 @@ export const Layout = ({ children }) => {
       permissionKey: 'sites',
       dropdownItems: [
         { label: 'View Sites', to: '/manager/sites' },
+        { label: 'Suggestions', to: '/manager/sites/suggestions', badge: suggestionCount },
         { label: 'Link Completed', to: '/manager/sites/link-completed' }
       ]
     },
@@ -124,7 +154,7 @@ export const Layout = ({ children }) => {
       active: location.pathname === '/manager/profile' || location.pathname === '/manager/profile/',
       permissionKey: 'profile'
     }
-  ], [location.pathname]);
+  ], [location.pathname, supportUnread, suggestionCount]);
 
   const navItems = useMemo(() => {
     if (!permissions) return allNavItems;

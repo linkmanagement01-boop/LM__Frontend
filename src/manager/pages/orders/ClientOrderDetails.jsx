@@ -4,7 +4,7 @@ import { Layout } from '../../components/layout/Layout';
 import { managerAPI } from '../../../lib/api';
 import {
   ArrowLeft, Globe, Send, Save, AlertCircle, CheckCircle, Clock, Package, Link2, FileText, Users, Info,
-  ExternalLink, XCircle, Store, PenLine, Upload, Mail, CalendarDays, DollarSign
+  ExternalLink, XCircle, Store, PenLine, Upload, Mail, CalendarDays, DollarSign, MessageSquare
 } from 'lucide-react';
 import { Badge } from './ClientOrders';
 
@@ -362,6 +362,12 @@ export const ClientOrderDetails = () => {
               <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mt-2 text-sm text-[var(--text-muted)]">
                 <span className="flex items-center gap-1.5"><Users size={14} /><b className="font-semibold text-[var(--text-secondary)]">{order.client_name_user || 'Client'}</b></span>
                 {order.client_email && <span className="flex items-center gap-1.5"><Mail size={14} />{order.client_email}</span>}
+                {order.marketplace && import.meta.env.VITE_MARKETPLACE_ENABLED === 'true' && (
+                  <button onClick={() => navigate(`/manager/client-messages?client=${order.client_user_id}${order.marketplace_order_id ? `&order=${order.marketplace_order_id}&number=${encodeURIComponent(order.order_number || '')}` : ''}`)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--primary-cyan)] hover:border-[var(--primary-cyan)]">
+                    <MessageSquare size={13} />Message client
+                  </button>
+                )}
                 <span className="flex items-center gap-1.5"><CalendarDays size={14} />{new Date(order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
               </div>
             </div>

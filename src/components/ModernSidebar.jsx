@@ -171,6 +171,9 @@ const NavItem = ({
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-border-strong)] group-hover:bg-[var(--color-primary)] transition-colors inline-block mr-2"></div>
                     <span className="relative z-10">{item.label}</span>
+                    {item.badge ? (
+                      <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[11px] font-bold flex items-center justify-center">{item.badge}</span>
+                    ) : null}
                   </Link>
                 ))}
               </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Globe, Search, SlidersHorizontal, ChevronDown, ChevronUp, ExternalLink, ShieldAlert, FileText, Ban, X, Eye, Mail, Download } from 'lucide-react';
 import { adminAPI } from '../../../lib/api';
 import ExportModal from '../../../components/ExportModal';
+import { SiteTrafficCard, AhrefsStrip, TrafficBatchBar, trafficRowFields } from '../../../components/SiteTraffic';
 import { exportToCSV, exportToExcel } from '../../../utils/exportUtils';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -189,6 +190,12 @@ export function SitesList() {
 
     const showingFrom = (page - 1) * (pageSize === 'all' ? pagination.total : pageSize) + 1;
     const showingTo = pageSize === 'all' ? pagination.total : Math.min(page * pageSize, pagination.total);
+
+    // Ahrefs traffic saved by the LM Traffic Helper → update the row
+    const handleTrafficSaved = (id, traffic) => {
+        if (!traffic) return;
+        setWebsites(prev => prev.map(site => site.id === id ? { ...site, ...trafficRowFields(traffic) } : site));
+    };
 
     // Delete Handler
     const handleDelete = async (id) => {
@@ -388,6 +395,7 @@ export function SitesList() {
                             <div className="text-sm font-medium ml-2" style={{ color: 'var(--text-primary)' }}>
                                 Showing <span style={{ color: 'var(--primary-cyan)' }}>{showingFrom}-{showingTo}</span> of {pagination.total}
                             </div>
+                            <TrafficBatchBar sites={websites} selectedIds={selectedRows} role="admin" />
                         </div>
 
                         <PaginationControls
@@ -415,6 +423,7 @@ export function SitesList() {
                                     onOpenModal={() => setSelectedSite(site)}
                                     isSelected={selectedRows.has(site.id)}
                                     onToggleSelect={() => handleSelectRow(site.id)}
+                                    onTrafficSaved={(t) => handleTrafficSaved(site.id, t)}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 />
                             ))}
@@ -492,6 +501,8 @@ export function SitesList() {
                                     <MetricBox label="RD" value={selectedSite.rd} color="#f97316" />
                                 </div>
                             </div>
+
+                            <SiteTrafficCard key={selectedSite.id} site={selectedSite} role="admin" />
 
                             {/* Status & Action Buttons */}
                             <div className="pt-6 border-t flex flex-col gap-4" style={{ borderColor: 'var(--border)' }}>
@@ -629,7 +640,7 @@ function PaginationControls({ page, totalPages, onPageChange, pageSize, onPageSi
     );
 }
 
-function ExpandableSiteRow({ site, onOpenModal, isSelected, onToggleSelect, style }) {
+function ExpandableSiteRow({ site, onOpenModal, isSelected, onToggleSelect, onTrafficSaved, style }) {
     const [expanded, setExpanded] = useState(false);
     const [editingMetrics, setEditingMetrics] = useState(false);
     const [metrics, setMetrics] = useState({
@@ -769,6 +780,13 @@ function ExpandableSiteRow({ site, onOpenModal, isSelected, onToggleSelect, styl
                             <ChevronDown className="h-5 w-5" style={{ color: 'var(--text-muted)' }} />
                         </button>
                     </div>
+                </div>
+            </div>
+
+            {/* Ahrefs line: traffic · graph · top countries (free Traffic Checker via the LM Traffic Helper) */}
+            <div className="px-4 pb-3">
+                <div className="rounded-lg px-3 py-2 border border-dashed border-orange-500/25 bg-orange-500/[0.03]">
+                    <AhrefsStrip site={site} role="admin" onSaved={onTrafficSaved} />
                 </div>
             </div>
 

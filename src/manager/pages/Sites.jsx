@@ -3,6 +3,7 @@ import { RefreshCw, Globe, Eye, X, ExternalLink, Search, SlidersHorizontal, Chev
 import { managerAPI } from '../../lib/api';
 import { Layout } from '../components/layout/Layout';
 import ExportModal from '../../components/ExportModal';
+import { SiteTrafficCard, AhrefsStrip, TrafficBatchBar, trafficRowFields } from '../../components/SiteTraffic';
 import { exportToCSV, exportToExcel } from '../../utils/exportUtils';
 
 export function Sites() {
@@ -168,6 +169,15 @@ export function Sites() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return addedDate >= thirtyDaysAgo;
   };
+
+  // Ahrefs traffic saved by the LM Traffic Helper → update the row
+  const handleTrafficSaved = (id, traffic) => {
+    if (!traffic) return;
+    setWebsites(prev => prev.map(site => site.id === id ? { ...site, ...trafficRowFields(traffic) } : site));
+  };
+
+  // Columns the Ahrefs line under each row spans (visible data columns + Action)
+  const ahrefsColSpan = ['root_domain', 'added_on', 'metrics', 'traffic', 'spam', 'price', 'status', 'email'].filter(k => visibleColumns[k]).length + 1;
 
   // Calculate showing range
   const showingFrom = (page - 1) * pageSize + 1;
@@ -374,8 +384,11 @@ export function Sites() {
 
             {/* Table Header/Controls */}
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-              <div className="text-sm text-[var(--text-secondary)]">
-                Showing <span className="text-[var(--primary-cyan)] font-medium">{showingFrom}-{showingTo}</span> of {pagination.total}
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="text-sm text-[var(--text-secondary)]">
+                  Showing <span className="text-[var(--primary-cyan)] font-medium">{showingFrom}-{showingTo}</span> of {pagination.total}
+                </div>
+                <TrafficBatchBar sites={websites} selectedIds={selectedRows} role="manager" />
               </div>
               <PaginationControls
                 page={page}
@@ -416,8 +429,8 @@ export function Sites() {
                       <th className="p-4 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border)]">
-                    {websites.length === 0 ? (
+                  {websites.length === 0 ? (
+                    <tbody>
                       <tr>
                         <td colSpan={11} className="p-12 text-center text-[var(--text-muted)]">
                           <div className="text-4xl mb-4">🔍</div>
@@ -426,10 +439,12 @@ export function Sites() {
                           <button onClick={resetFilters} className="mt-4 px-4 py-2 rounded-lg text-sm font-medium bg-[var(--primary-cyan)] text-black hover:opacity-90">Clear Filters</button>
                         </td>
                       </tr>
+                    </tbody>
                     ) : (
                       websites.map((site) => (
-                        <tr key={site.id} className="hover:bg-[var(--background-light)] transition-colors group">
-                          
+                      <tbody key={site.id} className="group border-b border-[var(--border)] hover:bg-[var(--background-light)] transition-colors">
+                        <tr>
+
                           {/* CHECKBOX */}
                           <td className="p-4 text-center">
                              <input 
@@ -542,9 +557,19 @@ export function Sites() {
                             </button>
                           </td>
                         </tr>
+
+                        {/* Ahrefs line: traffic · graph · top countries (free Traffic Checker via the LM Traffic Helper) */}
+                        <tr>
+                          <td></td>
+                          <td colSpan={ahrefsColSpan} className="px-4 pb-3 pt-0">
+                            <div className="rounded-lg px-3 py-2 border border-dashed border-orange-500/25 bg-orange-500/[0.03]">
+                              <AhrefsStrip site={site} role="manager" onSaved={(t) => handleTrafficSaved(site.id, t)} />
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
                       ))
                     )}
-                  </tbody>
                 </table>
               )}
             </div>
@@ -610,6 +635,8 @@ export function Sites() {
                       <MetricCard label="FC Niche" value={`$${selectedSite.fc_ne || 0}`} color="text-purple-400" />
                     </div>
                   </div>
+
+                  <SiteTrafficCard key={selectedSite.id} site={selectedSite} role="manager" />
                 </div>
               </div>
 

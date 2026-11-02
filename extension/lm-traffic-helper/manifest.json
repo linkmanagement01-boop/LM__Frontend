@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "LM Traffic Helper",
+  "version": "1.1.0",
+  "description": "Link Management: 'Check traffic' opens the free Ahrefs Traffic Checker and saves the result to the site.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://ahrefs.com/*",
+    "http://localhost:5001/*",
+    "https://api-linkmanagement.femur.studio/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:5173/*", "https://linkmanagement.femur.studio/*"],
+      "js": ["dashboard.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://ahrefs.com/traffic-checker*", "https://ahrefs.com/*/traffic-checker*"],
+      "js": ["ahrefs-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://ahrefs.com/traffic-checker*", "https://ahrefs.com/*/traffic-checker*"],
+      "js": ["ahrefs.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
