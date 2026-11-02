@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../components/ModernSidebar';
-import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal, Store } from 'lucide-react';
+import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal, Store, Crown } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
+import { useTrafficSuggestionCount } from '../components/TrafficSuggestions';
 
 export function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const suggestionCount = useTrafficSuggestionCount('admin');
 
   const getUserImage = () => {
     if (!user?.profile_image) return null;
@@ -31,7 +33,9 @@ export function AdminLayout() {
     { icon: <BarChart3 size={20} />, label: 'Price Charts', to: '/admin/price-charts', active: pathname.startsWith('/admin/price-charts') },
     // Marketplace isn't live yet – menu shows only where VITE_MARKETPLACE_ENABLED=true
     ...(import.meta.env.VITE_MARKETPLACE_ENABLED === 'true'
-      ? [{ icon: <Store size={20} />, label: 'Marketplace Pricing', to: '/admin/marketplace-pricing', active: pathname.startsWith('/admin/marketplace-pricing') }]
+      ? [{ icon: <Store size={20} />, label: 'Marketplace Pricing', to: '/admin/marketplace-pricing', active: pathname.startsWith('/admin/marketplace-pricing') },
+        { icon: <Crown size={20} />, label: 'Marketplace Clients', to: '/admin/marketplace-clients', active: pathname.startsWith('/admin/marketplace-clients') },
+        { icon: <Store size={20} />, label: 'Client Messages', to: '/admin/client-messages', active: pathname.startsWith('/admin/client-messages') }]
       : []),
     { icon: <Users2 size={20} />, label: 'Team Members', to: '/admin/team-members', active: pathname.startsWith('/admin/team-members') },
     {
@@ -45,7 +49,8 @@ export function AdminLayout() {
         { label: 'Deleted Sites', to: '/admin/sites/deleted' },
         { label: 'Pending Bulk Upload Requests', to: '/admin/sites/pending-bulk' },
         { label: 'Link Completed', to: '/admin/sites/link-completed' },
-        { label: 'Sites', to: '/admin/sites' }
+        { label: 'Sites', to: '/admin/sites' },
+        { label: 'Suggestions', to: '/admin/sites/suggestions', badge: suggestionCount }
       ]
     },
     {

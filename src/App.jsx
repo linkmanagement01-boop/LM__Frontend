@@ -12,6 +12,8 @@ import { AdminOrders } from './admin/pages/orders/AdminOrders.jsx';
 import { AdminOrderDetails } from './admin/pages/orders/AdminOrderDetails.jsx';
 import { PriceCharts as AdminPriceCharts } from './admin/pages/PriceCharts.jsx';
 import { MarketplacePricing as AdminMarketplacePricing } from './admin/pages/MarketplacePricing.jsx';
+import { MarketplaceClients as AdminMarketplaceClients } from './admin/pages/MarketplaceClients.jsx';
+import { ClientMessagesView as AdminClientMessages } from './manager/pages/ClientMessages.jsx';
 import { Bloggers as AdminBloggers } from './admin/pages/Bloggers.jsx';
 import { BloggerPerformance as AdminBloggerPerformance } from './admin/pages/BloggerPerformance.jsx';
 import { TeamMembers as AdminTeamMembers } from './admin/pages/TeamMembers.jsx';
@@ -22,6 +24,7 @@ import { ChangePassword as WriterChangePassword } from './writer/pages/ChangePas
 
 // Admin Sites pages
 import { LinkCompleted } from './admin/pages/sites/LinkCompleted.jsx';
+import { SiteSuggestions as AdminSiteSuggestions } from './admin/pages/sites/SiteSuggestions.jsx';
 import { AddExcel } from './admin/pages/sites/AddExcel.jsx';
 import { CreateAccountFromSites } from './admin/pages/sites/CreateAccountFromSites.jsx';
 import { DeletedSites } from './admin/pages/sites/DeletedSites.jsx';
@@ -107,6 +110,8 @@ function App() {
           <Route path="orders/:id" element={<AdminOrderDetails />} />
           <Route path="price-charts" element={<AdminPriceCharts />} />
           <Route path="marketplace-pricing" element={<AdminMarketplacePricing />} />
+          <Route path="marketplace-clients" element={<AdminMarketplaceClients />} />
+          <Route path="client-messages" element={<AdminClientMessages />} />
           <Route path="team-members" element={<AdminTeamMembers />} />
           <Route path="team-members/add" element={<AddTeamMember />} />
           <Route path="users/:id/permissions" element={<AdminUserPermissions />} />
@@ -119,6 +124,7 @@ function App() {
           <Route path="sites/deleted" element={<DeletedSites />} />
           <Route path="sites/pending-bulk" element={<PendingBulk />} />
           <Route path="sites/link-completed" element={<LinkCompleted />} />
+          <Route path="sites/suggestions" element={<AdminSiteSuggestions />} />
           <Route path="sites" element={<SitesList />} />
           <Route path="sites/edit/:id" element={<EditSite />} />
 

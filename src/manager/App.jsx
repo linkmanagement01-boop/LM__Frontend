@@ -16,8 +16,10 @@ import { WriterSubmissionDetails } from './pages/pending/WriterSubmissionDetails
 import { RejectedBloggers } from './pages/rejected/Bloggers.jsx';
 import { RejectedWriters } from './pages/rejected/Writers.jsx';
 import { Threads } from './pages/Threads.jsx';
+import { ClientMessages } from './pages/ClientMessages.jsx';
 import { Sites } from './pages/Sites.jsx';
 import { LinkCompleted } from './pages/sites/LinkCompleted.jsx';
+import { SiteSuggestions } from './pages/sites/SiteSuggestions.jsx';
 import { Profile } from './pages/Profile.jsx';
 import { ChangePassword } from './pages/ChangePassword.jsx';
 import { ClientOrders } from './pages/orders/ClientOrders.jsx';
@@ -50,7 +52,9 @@ export function ManagerRoutes() {
 
       {/* Threads & Sites */}
       <Route path="threads" element={<Threads />} />
+      <Route path="client-messages" element={<ClientMessages />} />
       <Route path="sites" element={<Sites />} />
+      <Route path="sites/suggestions" element={<SiteSuggestions />} />
       <Route path="sites/link-completed" element={<LinkCompleted />} />
       <Route path="sites/live-links" element={<LinkCompleted />} />
 

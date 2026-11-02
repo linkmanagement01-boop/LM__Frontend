@@ -300,10 +300,10 @@ export function TeamMembers() {
       let result;
       if (walletModal.type === 'add') {
         result = await adminAPI.addManualWalletBalance(walletModal.userId, parseFloat(walletAmount), walletRemarks);
-        setSuccessMessage(`₹${walletAmount} added to ${walletModal.userName}'s wallet. New balance: ₹${result.new_balance}`);
+        setSuccessMessage(`$${walletAmount} added to ${walletModal.userName}'s wallet. New balance: $${result.new_balance}`);
       } else {
         result = await adminAPI.withdrawManualWalletBalance(walletModal.userId, parseFloat(walletAmount), walletRemarks);
-        setSuccessMessage(`₹${walletAmount} withdrawn from ${walletModal.userName}'s wallet. New balance: ₹${result.new_balance}`);
+        setSuccessMessage(`$${walletAmount} withdrawn from ${walletModal.userName}'s wallet. New balance: $${result.new_balance}`);
       }
 
       // Update local client user balance
@@ -521,7 +521,7 @@ export function TeamMembers() {
                     {activeTab === 'client' && (
                       <td className="px-4 py-3 text-center">
                         <span className="font-semibold" style={{ color: '#22c55e' }}>
-                          ₹{parseFloat(m.wallet_balance || 0).toFixed(2)}
+                          ${parseFloat(m.wallet_balance || 0).toFixed(2)}
                         </span>
                       </td>
                     )}
@@ -552,6 +552,12 @@ export function TeamMembers() {
                       >
                         {m.is_active ? 'Active' : 'Blocked'}
                       </span>
+                      {m.marketplace_paused && (
+                        <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#d97706' }}
+                          title="Marketplace account paused after 12 months without an order – reactivate it in Marketplace Clients">
+                          Paused
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
@@ -836,11 +842,11 @@ export function TeamMembers() {
               {walletModal.type === 'add' ? 'Add balance to' : 'Withdraw balance from'} <strong>{walletModal.userName}</strong>'s wallet
             </p>
             <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-              Current Balance: <span style={{ color: '#22c55e', fontWeight: 600 }}>₹{walletModal.currentBalance.toFixed(2)}</span>
+              Current Balance: <span style={{ color: '#22c55e', fontWeight: 600 }}>${walletModal.currentBalance.toFixed(2)}</span>
             </p>
 
             <div className="mb-4">
-              <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Amount (₹)<span className="text-red-400">*</span></label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Amount ($)<span className="text-red-400">*</span></label>
               <input
                 type="number"
                 value={walletAmount}

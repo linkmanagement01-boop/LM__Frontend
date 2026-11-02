@@ -170,6 +170,21 @@ export const authAPI = {
 
 // ==================== Admin APIs ====================
 
+// Marketplace support chat (managers + admins share one inbox)
+export const supportAPI = {
+  conversations: async (params = {}) => (await api.get('/support/conversations', { params })).data,
+  conversation: async (id) => (await api.get(`/support/conversations/${id}`)).data,
+  send: async (id, body) => (await api.post(`/support/conversations/${id}/messages`, body)).data,
+  read: async (id) => (await api.post(`/support/conversations/${id}/read`, {})).data,
+  start: async (body) => (await api.post('/support/start', body)).data,
+  unread: async () => (await api.get('/support/unread')).data,
+  upload: async (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return (await api.post('/support/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })).data;
+  },
+};
+
 export const adminAPI = {
   // Marketplace pricing: blogger price ranges → marketplace price (per marketplace)
   getMarketplacePricing: async (marketplace = 'whitelabel') => {
@@ -177,6 +192,13 @@ export const adminAPI = {
     return response.data;
   },
   // kind: 'normal' (Guest Post / Niche Edit prices) or 'fc' (FC prices)
+  // Marketplace clients: plans + free sites
+  getMarketplaceClients: async (params = {}) => (await api.get('/admin/marketplace/clients', { params })).data,
+  getMarketplaceClientPlan: async (id) => (await api.get(`/admin/marketplace/clients/${id}/plan`)).data,
+  grantMarketplaceClientPro: async (id, note) => (await api.post(`/admin/marketplace/clients/${id}/grant-pro`, { note })).data,
+  reactivateMarketplaceClient: async (id, note) => (await api.post(`/admin/marketplace/clients/${id}/reactivate`, { note })).data,
+  getMarketplaceFreeSites: async () => (await api.get('/admin/marketplace/free-sites')).data,
+  saveMarketplaceFreeSites: async (domains) => (await api.put('/admin/marketplace/free-sites', { domains })).data,
   saveMarketplacePricing: async (marketplace, rules, kind = 'normal') => {
     const response = await api.put('/admin/marketplace/pricing', { marketplace, rules, kind });
     return response.data;
