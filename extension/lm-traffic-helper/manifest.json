@@ -1,30 +1,53 @@
 {
   "manifest_version": 3,
   "name": "LM Traffic Helper",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Link Management: 'Check traffic' opens the free Ahrefs Traffic Checker and saves the result to the site.",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "https://ahrefs.com/*",
     "http://localhost:5001/*",
+    "https://www.api.linkmanagement.net/*",
+    "https://api.linkmanagement.net/*",
     "https://api-linkmanagement.femur.studio/*"
   ],
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["http://localhost:5173/*", "https://linkmanagement.femur.studio/*"],
-      "js": ["dashboard.js"],
+      "matches": [
+        "http://localhost:5173/*",
+        "https://www.linkmanagement.net/*",
+        "https://linkmanagement.net/*",
+        "https://linkmanagement.femur.studio/*"
+      ],
+      "js": [
+        "dashboard.js"
+      ],
       "run_at": "document_start"
     },
     {
-      "matches": ["https://ahrefs.com/traffic-checker*", "https://ahrefs.com/*/traffic-checker*"],
-      "js": ["ahrefs-hook.js"],
+      "matches": [
+        "https://ahrefs.com/traffic-checker*",
+        "https://ahrefs.com/*/traffic-checker*"
+      ],
+      "js": [
+        "ahrefs-hook.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN"
     },
     {
-      "matches": ["https://ahrefs.com/traffic-checker*", "https://ahrefs.com/*/traffic-checker*"],
-      "js": ["ahrefs.js"],
+      "matches": [
+        "https://ahrefs.com/traffic-checker*",
+        "https://ahrefs.com/*/traffic-checker*"
+      ],
+      "js": [
+        "ahrefs.js"
+      ],
       "run_at": "document_start"
     }
   ]
