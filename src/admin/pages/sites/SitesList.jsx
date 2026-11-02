@@ -395,7 +395,7 @@ export function SitesList() {
                             <div className="text-sm font-medium ml-2" style={{ color: 'var(--text-primary)' }}>
                                 Showing <span style={{ color: 'var(--primary-cyan)' }}>{showingFrom}-{showingTo}</span> of {pagination.total}
                             </div>
-                            <TrafficBatchBar sites={websites} selectedIds={selectedRows} role="admin" />
+                            <TrafficBatchBar sites={websites} selectedIds={selectedRows} role="admin" status={filters.website_status} />
                         </div>
 
                         <PaginationControls

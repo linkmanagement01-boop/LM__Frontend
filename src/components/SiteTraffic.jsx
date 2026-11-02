@@ -154,25 +154,39 @@ function InstallHelperModal({ domain, onClose, update = false }) {
 const QUICK_COUNT = 10;
 
 /**
- * "Check traffic (N selected)" + "Check 10 unchecked" for View All Sites, and the progress box.
+ * "Check traffic (N selected)", "Check 10 unchecked" and "Re-check 10" for View All Sites, and the progress box.
+ * Unchecked / re-check take sites from the whole list (backend queue), not just this page:
+ * unchecked = newest added first, re-check = oldest check first (checked more than 7 days ago).
+ * status = the list's status filter (admin); managers always get approved sites.
  * The helper checks the sites one after another in one Ahrefs tab; each row updates as its site is saved.
  */
-export function TrafficBatchBar({ sites, selectedIds, role }) {
+export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' }) {
   const [modal, setModal] = useState(null); // install | update
   const [progress, setProgress] = useState(null);
+  const [queue, setQueue] = useState(null); // { unchecked, recheck_due, recheck_min_days }
+  const [loadingType, setLoadingType] = useState(null);
+  const [note, setNote] = useState('');
+
+  const loadCounts = useCallback(() => {
+    api.get(`/${role}/sites/traffic-queue`, { params: { status } }).then(({ data }) => setQueue(data)).catch(() => {});
+  }, [role, status]);
+
+  useEffect(() => { loadCounts(); }, [loadCounts]);
 
   useEffect(() => {
     const off = onTrafficProgress((p) => {
       if (p.status === 'idle') return;
       if (p.status === 'error') return setProgress({ status: 'stopped', total: 0, done: 0, saved: 0, skipped: 0, message: p.message });
       if (p.total > 1) setProgress(p); // single checks show on their own button
+      if (p.status === 'finished' || p.status === 'stopped') loadCounts();
     });
     if (isHelperInstalled()) requestTrafficStatus(); // a batch may still be running after a page reload
     return off;
-  }, []);
+  }, [loadCounts]);
+
+  useEffect(() => { if (!note) return; const t = setTimeout(() => setNote(''), 6000); return () => clearTimeout(t); }, [note]);
 
   const selected = sites.filter(s => selectedIds.has(s.id));
-  const unchecked = sites.filter(s => !s.ahrefs_checked_at).slice(0, QUICK_COUNT);
   const running = progress?.status === 'running';
 
   const run = (list) => {
@@ -181,6 +195,25 @@ export function TrafficBatchBar({ sites, selectedIds, role }) {
     if (!list.length) return;
     setProgress({ status: 'running', total: Math.min(list.length, BATCH_MAX), done: 0, saved: 0, skipped: 0, current: list[0].root_domain });
     startTrafficBatch(list, role);
+  };
+
+  /** Next 10 from the whole list */
+  const runQueue = async (type) => {
+    if (!isHelperInstalled()) return setModal('install');
+    if (!helperSupportsBatch()) return setModal('update');
+    try {
+      setLoadingType(type);
+      const { data } = await api.get(`/${role}/sites/traffic-queue`, { params: { type, status, limit: QUICK_COUNT } });
+      setQueue(data);
+      if (!data.sites.length) {
+        return setNote(type === 'unchecked' ? 'All sites are checked' : `All sites were checked in the last ${data.recheck_min_days} days`);
+      }
+      run(data.sites);
+    } catch {
+      setNote('Could not load the next sites – try again');
+    } finally {
+      setLoadingType(null);
+    }
   };
 
   const btn = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold whitespace-nowrap transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
@@ -195,11 +228,20 @@ export function TrafficBatchBar({ sites, selectedIds, role }) {
             Check traffic ({selected.length > BATCH_MAX ? `first ${BATCH_MAX} of ${selected.length}` : `${selected.length} selected`})
           </button>
         )}
-        <button disabled={running || !unchecked.length} onClick={() => run(unchecked)} className={`${btn} border-[var(--border)] hover:border-orange-400 hover:text-orange-500`}
-          style={{ color: 'var(--text-secondary)' }} title="Check the first unchecked sites on this page">
-          <Activity className="h-3.5 w-3.5" />
-          {unchecked.length ? `Check ${unchecked.length} unchecked` : 'All on this page checked'}
+        <button disabled={running || !!loadingType || queue?.unchecked === 0} onClick={() => runQueue('unchecked')}
+          className={`${btn} border-[var(--border)] hover:border-orange-400 hover:text-orange-500`}
+          style={{ color: 'var(--text-secondary)' }} title="Check the next never-checked sites from the whole list, newest added first">
+          {loadingType === 'unchecked' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
+          {queue?.unchecked === 0 ? 'All sites checked' : `Check ${QUICK_COUNT} unchecked${queue ? ` (${queue.unchecked.toLocaleString()} left)` : ''}`}
         </button>
+        <button disabled={running || !!loadingType} onClick={() => runQueue('recheck')}
+          className={`${btn} border-[var(--border)] hover:border-orange-400 hover:text-orange-500`}
+          style={{ color: 'var(--text-secondary)' }}
+          title={`Re-check the sites whose last check is oldest (checked more than ${queue?.recheck_min_days || 7} days ago) – repeated clicks go through the whole list`}>
+          {loadingType === 'recheck' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          Re-check {QUICK_COUNT}{queue ? ` (${queue.recheck_due.toLocaleString()} due)` : ''}
+        </button>
+        {note && <span className="text-xs font-medium text-orange-500">{note}</span>}
       </div>
 
       {progress && createPortal(<BatchProgress progress={progress} onClose={() => setProgress(null)} />, document.body)}
