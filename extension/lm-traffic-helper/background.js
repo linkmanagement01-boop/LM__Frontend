@@ -4,7 +4,7 @@
 // A single check is a batch of one.
 
 // Only these backends ever receive the login token
-const ALLOWED_API = ['http://localhost:5001', 'https://api-linkmanagement.femur.studio'];
+const ALLOWED_API = ['http://localhost:5001', 'https://www.api.linkmanagement.net', 'https://api.linkmanagement.net', 'https://api-linkmanagement.femur.studio'];
 const ROLES = ['admin', 'manager'];
 const MAX_BATCH = 25;
 const NEXT_DELAY_MS = [4000, 8000]; // human-paced gap between sites (random in this range)
