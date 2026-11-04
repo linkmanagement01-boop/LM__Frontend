@@ -54,9 +54,9 @@ export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSel
     const spam = Number(site.spam_score) || 0;
     const money = (v) => (v !== null && v !== undefined && v !== '' && Number(v) > 0 ? `$${Number(v).toLocaleString()}` : 'N/A');
     const shortDate = (d) => (d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' }) : '-');
-    // FC on → the FC prices come first and stand out
+    // FC (Forbidden Category) on → only the FC prices, highlighted; off → every price the site has
     const all = [['Guest Post', site.gp_price], ['Niche Edit', site.niche_edit_price], ['FC GP', site.fc_gp, true], ['FC NE', site.fc_ne, true]];
-    const prices = (fc ? [...all.slice(2), ...all.slice(0, 2)] : all)
+    const prices = (fc ? all.filter(([, , isFc]) => isFc) : all)
         .filter(([, v]) => Number(v) > 0).map(([label, value, isFc]) => ({ label, value, hot: fc && isFc }));
 
     return (
@@ -218,12 +218,15 @@ export function CategoryPopover({ domain, category, niche }) {
                 <Tag className="h-4 w-4 shrink-0 text-[var(--primary-cyan)]" />
                 <span className="flex-1 text-sm font-bold break-all" style={{ color: 'var(--text-primary)' }}>{category}</span>
             </div>
-            <div className="text-[11px] uppercase font-bold tracking-wider mt-4" style={{ color: 'var(--text-muted)' }}>Website niche</div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-                {niches.length ? niches.map(n => (
-                    <span key={n} className="px-2.5 py-1 rounded-lg border text-xs font-semibold" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background-dark)', color: 'var(--text-primary)' }}>{n}</span>
-                )) : <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Not set</span>}
-            </div>
+            {/* only when the site has a website niche */}
+            {niches.length > 0 && <>
+                <div className="text-[11px] uppercase font-bold tracking-wider mt-4" style={{ color: 'var(--text-muted)' }}>Website niche</div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                    {niches.map(n => (
+                        <span key={n} className="px-2.5 py-1 rounded-lg border text-xs font-semibold" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background-dark)', color: 'var(--text-primary)' }}>{n}</span>
+                    ))}
+                </div>
+            </>}
         </HoverPopover>
     );
 }

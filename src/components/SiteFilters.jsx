@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Search, Check, X, SlidersHorizontal, ShieldAlert, LayoutGrid, FileText, Link2, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, Search, Check, X, SlidersHorizontal, ShieldAlert, LayoutGrid, FileText, Link2, ArrowUpDown, Lightbulb } from 'lucide-react';
 
 /**
  * Marketplace-style filters for the team's Sites pages (admin + manager):
@@ -284,7 +284,7 @@ export function SiteFilterPanel({ f, className = '', allStatusLabel = 'All statu
 export function SiteToolbar({ f, className = '' }) {
     const { applied, fcOn } = f;
     return (
-        <div className={`flex flex-wrap items-center gap-2.5 ${className}`}>
+        <div className={`flex flex-wrap xl:flex-nowrap items-center gap-2.5 ${className}`}>
             {/* Order type */}
             <div className="flex items-center gap-1 p-1 h-10 rounded-xl bg-slate-100 shrink-0">
                 {TABS.map(([v, l, Icon]) => (
@@ -292,28 +292,47 @@ export function SiteToolbar({ f, className = '' }) {
                         className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-sm font-semibold transition-all ${applied.type === v
                             ? 'bg-[var(--color-primary)] text-white hover:text-white shadow-sm'
                             : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'}`}>
-                        <Icon className="h-4 w-4" />{l}
+                        <Icon className="h-4 w-4 hidden 2xl:block" />{l}
                     </button>
                 ))}
             </div>
 
-            {/* FC: only sites that take FC content, with their FC prices (off by default) */}
-            <button type="button" onClick={() => f.setFc(!fcOn)} role="switch" aria-checked={fcOn}
-                title="FC = sites that accept FC content, filtered and sorted by their FC prices"
+            {/* FC (Forbidden Category): only sites that take FC content, with their FC prices (off by default) */}
+            <button type="button" onClick={() => f.setFc(!fcOn)} role="switch" aria-checked={fcOn} aria-label="FC (Forbidden Category) prices"
                 className={`inline-flex items-center gap-2.5 h-10 pl-3.5 pr-3 rounded-xl border text-sm font-semibold transition-all shrink-0 ${fcOn
                     ? 'border-red-200 bg-red-50 text-red-700 hover:text-red-700 shadow-sm shadow-red-100'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'}`}>
-                <ShieldAlert className={`h-4 w-4 ${fcOn ? 'text-red-600' : 'text-slate-400'}`} />
-                FC prices
+                {/* hover the icon or "FC" → what FC stands for */}
+                <span className="group/fc relative inline-flex items-center gap-2.5 text-inherit">
+                    <ShieldAlert className={`h-4 w-4 ${fcOn ? 'text-red-600' : 'text-slate-400'}`} />
+                    <span className="text-inherit underline decoration-dotted decoration-1 underline-offset-4">FC</span>
+                    <span role="tooltip"
+                        className="pointer-events-none absolute left-0 top-full mt-2.5 z-40 w-64 rounded-xl bg-slate-900 px-3.5 py-2.5 text-left shadow-xl opacity-0 translate-y-1 transition-all group-hover/fc:opacity-100 group-hover/fc:translate-y-0">
+                        <span className="block text-sm font-bold text-white">FC = Forbidden Category</span>
+                        <span className="block mt-1 text-xs font-medium leading-relaxed text-slate-300">Sites that accept forbidden-category content, shown with their FC prices.</span>
+                    </span>
+                </span>
+                <span className="text-inherit -ml-1">prices</span>
                 <span className={`relative w-9 h-5 rounded-full transition-colors ${fcOn ? 'bg-red-500' : 'bg-slate-300'}`}>
                     <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${fcOn ? 'translate-x-4' : ''}`} />
                 </span>
             </button>
 
+            {/* when to use FC – a small card beside the toggle (full sentence on hover) */}
+            <div title={fcOn ? 'Showing FC prices only – the sites that accept forbidden-category content.' : 'Turn on FC prices for premium categories like Casino, CBD, Crypto and more.'}
+                className={`flex items-center gap-2 h-10 min-w-0 xl:flex-initial xl:shrink px-3 rounded-xl border text-[11px] leading-tight font-medium ${fcOn ? 'border-red-100 bg-red-50/60' : 'border-amber-200 bg-amber-50'}`}>
+                <Lightbulb className={`h-4 w-4 shrink-0 ${fcOn ? 'text-red-500' : 'text-amber-500'}`} />
+                <span className={`line-clamp-2 ${fcOn ? 'text-red-800' : 'text-amber-900'}`}>
+                    {fcOn
+                        ? <><b className="text-inherit">FC on:</b> showing FC prices only</>
+                        : <><b className="text-inherit">Pro tip:</b> turn on FC prices for premium categories like Casino, CBD, Crypto and more.</>}
+                </span>
+            </div>
+
             {/* Sort */}
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 ml-auto">
                 <ArrowUpDown className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <select className="h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-sm font-medium text-slate-700 outline-none appearance-none cursor-pointer hover:border-slate-300 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-glow)] w-48"
+                <select className="h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-sm font-medium text-slate-700 outline-none appearance-none cursor-pointer hover:border-slate-300 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-glow)] w-40"
                     value={applied.sort} onChange={e => f.setNow('sort', e.target.value)} aria-label="Sort sites">
                     {SORTS.map(s => <option key={s.v} value={s.v}>{s.l}</option>)}
                 </select>
