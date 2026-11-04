@@ -28,6 +28,8 @@ module.exports = {
 
         // Accents
         primary: "var(--color-primary)",
+        // the panel's brand colour with opacity support (bg-brand/10) – orange, violet inside .theme-violet
+        brand: "rgb(var(--brand-rgb) / <alpha-value>)",
         "primary-hover": "var(--color-primary-hover)",
         "primary-light": "var(--color-primary-light)",
         "primary-deep": "var(--color-primary-deep)",

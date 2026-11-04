@@ -79,7 +79,7 @@ export function PendingWriters() {
     if (type.includes('niche')) {
       return { bg: 'bg-emerald-500/10', color: 'text-emerald-400', border: 'border-emerald-500/20', text: 'niche' };
     } else {
-      return { bg: 'bg-orange-500/10', color: 'text-orange-400', border: 'border-orange-500/20', text: 'gp' };
+      return { bg: 'bg-brand/10', color: 'text-brand', border: 'border-brand/20', text: 'gp' };
     }
   };
 
@@ -92,7 +92,7 @@ export function PendingWriters() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
               <PenTool className="h-8 w-8 text-[var(--primary-cyan)]" />
               Pending From Writers
             </h1>

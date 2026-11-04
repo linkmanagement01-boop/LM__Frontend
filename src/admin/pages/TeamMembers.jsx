@@ -367,7 +367,7 @@ export function TeamMembers() {
           }`}
         >
           <Users2 className="h-4 w-4" />
-          <span>Team Members</span>
+          <span className="text-inherit">Team Members</span>
         </button>
         <button
           onClick={() => handleTabChange('client')}
@@ -378,7 +378,7 @@ export function TeamMembers() {
           }`}
         >
           <Wallet className="h-4 w-4" />
-          <span>Client Members</span>
+          <span className="text-inherit">Client Members</span>
         </button>
       </div>
 

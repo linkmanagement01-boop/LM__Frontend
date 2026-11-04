@@ -11,7 +11,8 @@ LM Traffic Helper – install (one time, Google Chrome)
 Use
 ---
 View All Sites → "Check traffic" on a domain.
-An Ahrefs tab opens and checks the domain. If Ahrefs asks you to verify you are human, complete it.
-When the results load, the helper saves them to the site and closes the tab.
+The check runs in a background Ahrefs tab – you stay on View All Sites and the row updates when it is saved.
+Only if Ahrefs asks you to verify you are human, the Ahrefs tab comes to the front: complete it and the
+check continues by itself, then you are taken back to Link Management. The tab closes when it is done.
 
 If a check isn't saved automatically, click "Save now" in the dark box at the bottom right of the Ahrefs tab.

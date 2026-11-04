@@ -235,7 +235,7 @@ export function WithdrawalRequestDetail() {
                 disabled={submitting}
                 className="px-6 py-2 rounded-lg font-medium flex items-center gap-2 transition-all hover:opacity-80 disabled:opacity-50"
                 style={{
-                    backgroundColor: 'var(--warning)',
+                    backgroundColor: 'var(--color-primary)',
                     color: 'white'
                 }}
             >

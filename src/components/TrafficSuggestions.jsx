@@ -82,7 +82,7 @@ export function TrafficSuggestionsPage({ role }) {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-            <Lightbulb className="h-6 w-6 text-orange-500" /> Site Suggestions
+            <Lightbulb className="h-6 w-6 text-brand" /> Site Suggestions
           </h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
             Decisions from Ahrefs traffic checks – activate growing rejected sites, and review automatic rejections.
@@ -95,7 +95,7 @@ export function TrafficSuggestionsPage({ role }) {
 
       {rules && (
         <div className="flex items-start gap-2 text-xs rounded-xl px-4 py-3" style={{ backgroundColor: 'var(--card-background)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
-          <Info className="h-4 w-4 shrink-0 mt-0.5 text-orange-500" />
+          <Info className="h-4 w-4 shrink-0 mt-0.5 text-brand" />
           <div>
             When a site's Ahrefs traffic is checked: an <b>approved</b> site with <b>{rules.auto_reject_max} or less</b> organic traffic is rejected automatically,
             and a <b>rejected</b> site with <b>{rules.suggest_min}+</b> traffic that is <b>growing</b> (last 3 months at least {rules.growth_min_pct}% above the 3 before, latest month not falling) is suggested here.
@@ -110,10 +110,10 @@ export function TrafficSuggestionsPage({ role }) {
           const active = tab === key;
           return (
             <button key={key} onClick={() => setParams(key === 'suggested' ? {} : { tab: key })}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${active ? 'border-orange-500' : 'border-transparent hover:border-[var(--border)]'}`}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${active ? 'border-brand' : 'border-transparent hover:border-[var(--border)]'}`}
               style={{ color: active ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
               <Icon className={`h-4 w-4 ${tone}`} /> {label}
-              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${counts[key] ? 'bg-orange-500 text-white' : 'bg-[var(--background-light)]'}`}>{counts[key] || 0}</span>
+              <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${counts[key] ? 'bg-brand text-white' : 'bg-[var(--background-light)]'}`}>{counts[key] || 0}</span>
             </button>
           );
         })}
@@ -182,7 +182,7 @@ function SuggestionCard({ site, role, tab, busy, onDecide, onRechecked }) {
         {/* Traffic + trend */}
         <div className="flex items-center gap-4 lg:ml-auto">
           <div className="text-right">
-            <div className="text-xl font-extrabold text-orange-500">{site.ahrefs_traffic !== null ? Number(site.ahrefs_traffic).toLocaleString() : '-'}</div>
+            <div className="text-xl font-extrabold text-brand">{site.ahrefs_traffic !== null ? Number(site.ahrefs_traffic).toLocaleString() : '-'}</div>
             <div className="flex items-center justify-end gap-1.5 mt-0.5">
               <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Ahrefs / mo</span>
               <GrowthPill pct={site.growth_pct} />
@@ -218,7 +218,7 @@ function SuggestionCard({ site, role, tab, busy, onDecide, onRechecked }) {
       </div>
 
       <div className="px-4 pb-3">
-        <div className="rounded-lg px-3 py-2 border border-dashed border-orange-500/25 bg-orange-500/[0.03]">
+        <div className="rounded-lg px-3 py-2 border border-dashed border-brand/25 bg-brand/[0.03]">
           <AhrefsStrip site={site} role={role} onSaved={(t) => onRechecked(site.id, t)} />
         </div>
         <div className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>

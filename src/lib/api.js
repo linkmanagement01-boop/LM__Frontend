@@ -345,6 +345,12 @@ export const adminAPI = {
     return response.data;
   },
 
+  // Dashboard: sites, live links, orders, link pipeline + month-by-month numbers for one year
+  getDashboardOverview: async (year) => {
+    const response = await api.get('/admin/dashboard/overview', { params: year ? { year } : {} });
+    return response.data;
+  },
+
   // Price Charts
   getPriceCharts: async () => {
     const response = await api.get('/admin/price-charts');

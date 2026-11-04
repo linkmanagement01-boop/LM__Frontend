@@ -136,7 +136,7 @@ export function BloggerSubmissionDetails() {
                 <div className="premium-card p-8">
                     <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--border)]">
                         <div>
-                            <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                            <h2 className="text-2xl font-bold text-[var(--text-main)]">
                                 Blogger Submission
                             </h2>
                             <p className="text-sm text-[var(--text-muted)] mt-1">Review data submitted by the blogger</p>

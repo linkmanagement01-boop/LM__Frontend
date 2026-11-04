@@ -188,7 +188,7 @@ export function EditVideo() {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                         <div style={{
                             width: '44px', height: '24px', borderRadius: '12px',
-                            backgroundColor: form.is_active ? '#f59e0b' : '#444',
+                            backgroundColor: form.is_active ? 'var(--color-primary)' : '#444',
                             position: 'relative', transition: 'background-color 0.2s'
                         }}>
                             <div style={{

@@ -49,7 +49,7 @@ export function Videos() {
                     Videos
                 </h1>
                 <Link to="/admin/more/videos/create" style={{
-                    padding: '10px 20px', backgroundColor: '#f59e0b',
+                    padding: '10px 20px', backgroundColor: 'var(--color-primary)',
                     color: '#fff', borderRadius: '6px', fontWeight: '600',
                     textDecoration: 'none', fontSize: '14px'
                 }}>
@@ -122,7 +122,7 @@ export function Videos() {
                                             )}
                                         </td>
                                         <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                                            <Link to={`/admin/more/videos/edit/${video.id}`} style={{ color: '#f59e0b' }}>
+                                            <Link to={`/admin/more/videos/edit/${video.id}`} style={{ color: 'var(--color-primary)' }}>
                                                 <Edit size={18} />
                                             </Link>
                                         </td>

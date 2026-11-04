@@ -80,7 +80,7 @@ export function PendingTeams() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
               <Users className="h-8 w-8 text-[var(--primary-cyan)]" />
               Pending From Teams
             </h1>

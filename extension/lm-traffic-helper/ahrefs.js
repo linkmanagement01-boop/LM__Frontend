@@ -4,6 +4,10 @@
 (() => {
   const SETTLE_MS = 3000;     // wait for the last result request (countries can come separately)
   const TIMEOUT_MS = 120000;  // no result for this long → skip the site
+  // The tab runs in the background. Ask to be shown to the person when Ahrefs is waiting for "verify you are human":
+  const CHALLENGE_WAIT_MS = 5000;  // a human-check box has been on the page this long without results
+  const NO_RESULT_MS = 25000;      // or no results at all this long after the page opened
+  let surfaced = false;
   const captures = [];
   let job = null;
   let timer = null;
@@ -107,12 +111,39 @@
     setTimeout(() => { if (!captures.length && !sent) btn.click(); }, 300);
   };
 
+  // ── "Verify you are human" → bring this tab to the front ──
+  const challengeShown = () => {
+    if (/just a moment|verify you are human|checking your browser|are you a robot/i.test(document.title)) return true;
+    const box = document.querySelector('iframe[src*="challenges.cloudflare.com"], .cf-turnstile, [id^="cf-chl"], iframe[src*="captcha"], iframe[title*="challenge" i]');
+    if (box && box.getBoundingClientRect().height > 20) return true;
+    return /verify you are human|i'm not a robot|confirm you are human/i.test((document.body?.innerText || '').slice(0, 5000));
+  };
+  const askForHuman = () => {
+    if (surfaced || sent || captures.length || !job) return;
+    surfaced = true;
+    chrome.runtime.sendMessage({ type: 'needsHuman' }).catch(() => {});
+    showPanel('Ahrefs wants you to verify you are human. Complete it here – the check continues by itself.', 'info', true);
+  };
+  const watchForHuman = () => {
+    const started = Date.now();
+    let seenAt = 0;
+    const tick = setInterval(() => {
+      if (sent || captures.length || surfaced) return clearInterval(tick);
+      if (challengeShown()) {
+        seenAt = seenAt || Date.now();
+        if (Date.now() - seenAt >= CHALLENGE_WAIT_MS) askForHuman();
+      } else seenAt = 0;
+      if (Date.now() - started >= NO_RESULT_MS) askForHuman();
+    }, 1000);
+  };
+
   chrome.runtime.sendMessage({ type: 'job' }).then((j) => {
     if (!j) return; // not opened from Link Management
     job = j;
     showPanel('Checking traffic… If Ahrefs asks you to verify you are human, complete it.', 'info', true);
     if (captures.length) { clearTimeout(timer); timer = setTimeout(send, SETTLE_MS); }
     setTimeout(autoStart, 4000);
+    watchForHuman();
     if (job.total > 1) timeout = setTimeout(() => skip('Skipped – no result from Ahrefs within 2 minutes'), TIMEOUT_MS);
   }).catch(() => {});
 })();

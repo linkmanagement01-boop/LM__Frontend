@@ -191,25 +191,25 @@ export function EditCountry() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                             <input type="checkbox" name="bank" checked={form.bank} onChange={handleChange}
-                                style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }} />
+                                style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }} />
                             <span style={{ color: 'var(--text-primary, #fff)', fontSize: '14px' }}>Bank</span>
                         </label>
 
                         <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                             <input type="checkbox" name="paypal" checked={form.paypal} onChange={handleChange}
-                                style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }} />
+                                style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }} />
                             <span style={{ color: 'var(--text-primary, #fff)', fontSize: '14px' }}>Paypal ID</span>
                         </label>
 
                         <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                             <input type="checkbox" name="qr_code" checked={form.qr_code} onChange={handleChange}
-                                style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }} />
+                                style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }} />
                             <span style={{ color: 'var(--text-primary, #fff)', fontSize: '14px' }}>QR Code</span>
                         </label>
 
                         <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                             <input type="checkbox" name="upi_id" checked={form.upi_id} onChange={handleChange}
-                                style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }} />
+                                style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }} />
                             <span style={{ color: 'var(--text-primary, #fff)', fontSize: '14px' }}>UPI ID</span>
                         </label>
                     </div>

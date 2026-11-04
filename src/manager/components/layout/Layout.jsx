@@ -13,6 +13,12 @@ export const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [permissions, setPermissions] = useState(null);
+
+  // popups rendered into <body> (hover cards, batch progress) follow the violet theme too
+  useEffect(() => {
+    document.body.classList.add('theme-violet');
+    return () => document.body.classList.remove('theme-violet');
+  }, []);
   
   // Assuming useAuth is available or fallback to local storage logic
   const { logout, user } = useAuth ? useAuth() : {
@@ -120,7 +126,7 @@ export const Layout = ({ children }) => {
       label: (
         <span className="inline-flex items-center gap-2">
           Client Messages
-          {supportUnread > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold grid place-items-center">{supportUnread}</span>}
+          {supportUnread > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[10px] font-bold grid place-items-center">{supportUnread}</span>}
         </span>
       ),
       to: '/manager/client-messages',
@@ -165,7 +171,8 @@ export const Layout = ({ children }) => {
   }, [allNavItems, permissions]);
 
   return (
-    <div className="h-screen overflow-hidden flex bg-transparent">
+    // theme-violet: the new brand colours, as in the admin panel
+    <div className="theme-violet h-screen overflow-hidden flex">
       <ModernSidebar
         navItems={navItems}
         userName={user?.name || "Manager User"}
@@ -174,6 +181,8 @@ export const Layout = ({ children }) => {
         onLogout={handleLogout}
         profileLink="/manager/profile"
         changePasswordLink="/manager/change-password"
+        overlay={/^\/manager\/sites\/?$/.test(location.pathname)}
+        logo="/brand/logo-mark.svg"
       />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <main className="flex-1 p-8 overflow-y-auto custom-scrollbar">

@@ -202,7 +202,7 @@ export const ViewOrders = () => {
       <div className="p-8 max-w-[1600px] mx-auto min-h-screen">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">View Orders</h1>
+            <h1 className="text-3xl font-bold text-[var(--text-main)]">View Orders</h1>
             <p className="text-[var(--text-muted)] mt-1">{total} total orders managed</p>
           </div>
           <div className="flex gap-3">
@@ -247,7 +247,7 @@ export const ViewOrders = () => {
                 onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
                 type="text"
                 placeholder="Search by order id, client, web..."
-                className="premium-input pl-10"
+                className="premium-input pl-10 w-full"
               />
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] h-4 w-4" />
             </div>
@@ -546,7 +546,7 @@ export const ViewOrders = () => {
                     </label>
                     <input
                       type="text"
-                      className="premium-input"
+                      className="premium-input w-full"
                       value={editData.client_name}
                       onChange={(e) => setEditData({ ...editData, client_name: e.target.value })}
                       placeholder="Enter client name"
@@ -558,7 +558,7 @@ export const ViewOrders = () => {
                     </label>
                     <input
                       type="text"
-                      className="premium-input"
+                      className="premium-input w-full"
                       value={editData.client_website}
                       onChange={(e) => setEditData({ ...editData, client_website: e.target.value })}
                       placeholder="https://example.com"
@@ -580,7 +580,7 @@ export const ViewOrders = () => {
                     <button type="button" className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded text-[var(--text-primary)] text-xs">H2</button>
                   </div>
                   <textarea
-                    className="premium-input rounded-t-none min-h-[120px]"
+                    className="premium-input rounded-t-none min-h-[120px] w-full"
                     value={editData.message}
                     onChange={(e) => setEditData({ ...editData, message: e.target.value })}
                     placeholder="Enter message or notes..."

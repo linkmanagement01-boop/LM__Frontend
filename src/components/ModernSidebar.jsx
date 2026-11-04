@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ChevronDown,
@@ -172,7 +172,7 @@ const NavItem = ({
                     <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-border-strong)] group-hover:bg-[var(--color-primary)] transition-colors inline-block mr-2"></div>
                     <span className="relative z-10">{item.label}</span>
                     {item.badge ? (
-                      <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[11px] font-bold flex items-center justify-center">{item.badge}</span>
+                      <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--color-primary)] text-white text-[11px] font-bold flex items-center justify-center">{item.badge}</span>
                     ) : null}
                   </Link>
                 ))}
@@ -195,17 +195,24 @@ export const ModernSidebar = ({
   changePasswordLink = "/change-password",
   onLogout,
   isMobileOpen = false,
-  onMobileClose
+  onMobileClose,
+  // overlay: starts collapsed and, when opened, floats over the page instead of pushing it (e.g. Sites pages)
+  overlay = false,
+  logo = null // image URL of the brand mark; none → the old "L" tile
 }) => {
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(overlay);
   const { isDark, toggleTheme } = useTheme();
+
+  // collapse when entering an overlay page, open again when leaving it
+  useEffect(() => { setCollapsed(overlay); }, [overlay]);
 
   const sidebarClasses = `
     h-screen flex flex-col bg-[var(--surface)]
-    fixed lg:static top-0 left-0 z-40 transition-all duration-300 ease-in-out border-r border-[var(--color-border)]
+    fixed ${overlay ? 'lg:fixed z-50' : 'lg:static z-40'} top-0 left-0 transition-all duration-300 ease-in-out border-r border-[var(--color-border)]
     ${collapsed ? 'w-20' : 'w-72'}
+    ${overlay && !collapsed ? 'lg:shadow-2xl' : ''}
     ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
   `;
 
@@ -219,12 +226,19 @@ export const ModernSidebar = ({
         />
       )}
 
+      {/* Overlay mode: keeps the collapsed width in the layout; click outside the open sidebar to close it */}
+      {overlay && <div className="hidden lg:block w-20 shrink-0" />}
+      {overlay && !collapsed && (
+        <div className="hidden lg:block fixed inset-0 z-40 bg-black/20" onClick={() => setCollapsed(true)} />
+      )}
+
       <aside className={sidebarClasses}>
         {/* Logo Section */}
         <div
           className={`flex items-center gap-3 ${collapsed ? 'justify-center p-4' : 'p-8'} relative border-b border-[var(--color-border)]`}
         >
           <div className="relative shrink-0">
+            {logo ? <img src={logo} alt="Link Management" className="w-10 h-10 rounded-xl shadow-sm" /> : (
             <div
               className={`relative rounded-xl flex items-center justify-center font-bold text-lg shadow-sm ${collapsed ? 'w-10 h-10' : 'w-10 h-10'}`}
               style={{
@@ -234,6 +248,7 @@ export const ModernSidebar = ({
             >
               L
             </div>
+            )}
           </div>
 
           {!collapsed && (
@@ -345,20 +360,20 @@ export const ModernSidebar = ({
                 >
                   <Link
                     to={profileLink}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--surface-muted)] transition-all duration-200 text-[var(--text-body)] hover:text-[var(--text-main)]"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--color-primary-light)] transition-all duration-200 text-[var(--text-body)] hover:text-[var(--color-primary)]"
                     onClick={() => setShowProfileMenu(false)}
                   >
                     <User size={16} />
-                    <span className="text-sm font-medium">Profile</span>
+                    <span className="text-sm font-medium text-inherit">Profile</span>
                   </Link>
 
                   <Link
                     to={changePasswordLink}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--surface-muted)] transition-all duration-200 text-[var(--text-body)] hover:text-[var(--text-main)]"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--color-primary-light)] transition-all duration-200 text-[var(--text-body)] hover:text-[var(--color-primary)]"
                     onClick={() => setShowProfileMenu(false)}
                   >
                     <Key size={16} />
-                    <span className="text-sm font-medium">Change Password</span>
+                    <span className="text-sm font-medium text-inherit">Change Password</span>
                   </Link>
 
                   <div className="my-1.5 h-px bg-[var(--color-border)]" />
@@ -368,10 +383,10 @@ export const ModernSidebar = ({
                       setShowProfileMenu(false);
                       if (onLogout) onLogout();
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-[var(--color-error)] hover:bg-[var(--color-error)] hover:text-white"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-[var(--color-error)] hover:bg-red-50 hover:text-red-700"
                   >
                     <LogOut size={16} />
-                    <span className="text-sm font-medium">Logout</span>
+                    <span className="text-sm font-medium text-inherit">Logout</span>
                   </button>
                 </motion.div>
               )}

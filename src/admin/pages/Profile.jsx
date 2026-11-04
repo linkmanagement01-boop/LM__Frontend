@@ -288,7 +288,7 @@ export function Profile() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-6 py-2.5 bg-[#F97316] hover:bg-[#EA580C] text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                            className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white hover:text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                         >
                             {saving ? 'Saving...' : 'Submit'}
                         </button>

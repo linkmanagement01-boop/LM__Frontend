@@ -250,7 +250,7 @@ export function TeamSubmissionDetails() {
                         Back
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                        <h1 className="text-2xl font-bold text-[var(--text-main)]">
                             Pending Approval - Team Submission
                         </h1>
                         <p className="text-[var(--text-muted)] text-sm mt-1">Order #{task.id} • {task.client_name}</p>

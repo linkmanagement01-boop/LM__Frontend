@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../components/ModernSidebar';
 import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal, Store, Crown } from 'lucide-react';
@@ -11,6 +11,12 @@ export function AdminLayout() {
   const { logout, user } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const suggestionCount = useTrafficSuggestionCount('admin');
+
+  // popups rendered into <body> (hover cards, batch progress) follow the violet theme too
+  useEffect(() => {
+    document.body.classList.add('theme-violet');
+    return () => document.body.classList.remove('theme-violet');
+  }, []);
 
   const getUserImage = () => {
     if (!user?.profile_image) return null;
@@ -85,7 +91,8 @@ export function AdminLayout() {
   ];
 
   return (
-    <div className="h-screen overflow-hidden flex bg-transparent">
+    // theme-violet: the new brand colours for the admin panel (other panels keep theirs for now)
+    <div className="theme-violet h-screen overflow-hidden flex">
       <ModernSidebar
         navItems={navItems}
         userName={user?.name || "Admin User"}
@@ -96,6 +103,8 @@ export function AdminLayout() {
         onMobileClose={() => setIsMobileOpen(false)}
         profileLink="/admin/profile"
         changePasswordLink="/admin/change-password"
+        overlay={/^\/admin\/sites\/?$/.test(pathname)}
+        logo="/brand/logo-mark.svg"
       />
       <div className="flex-1 flex flex-col min-w-0 h-full">
         <header className="px-8 py-6 border-b border-[var(--color-border)] bg-white/70 backdrop-blur-md sticky top-0 z-30">

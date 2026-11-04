@@ -195,7 +195,7 @@ export function WithdrawalRequests() {
             <React.Fragment key={`user-${group.key}`}>
                 <tr
                     className="transition-colors cursor-pointer"
-                    style={{ borderBottom: '1px solid var(--border)', backgroundColor: open ? 'rgba(249, 115, 22, 0.06)' : undefined }}
+                    style={{ borderBottom: '1px solid var(--border)', backgroundColor: open ? 'rgb(var(--brand-rgb) / 0.06)' : undefined }}
                     onClick={() => toggleUser(group.key)}
                     title={open ? 'Click to hide requests' : 'Click to see all requests from this user'}
                 >
@@ -205,7 +205,7 @@ export function WithdrawalRequests() {
                             <div>
                                 <p className="font-medium flex items-center gap-2 flex-wrap" style={{ color: 'var(--text-primary)' }}>
                                     {group.user_name}
-                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgba(249, 115, 22, 0.12)', color: 'rgb(234, 88, 12)', border: '1px solid rgba(249, 115, 22, 0.35)' }}>
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: 'rgb(var(--brand-rgb) / 0.12)', color: 'var(--color-primary-deep)', border: '1px solid rgb(var(--brand-rgb) / 0.35)' }}>
                                         {group.requests.length} requests
                                     </span>
                                 </p>
@@ -254,9 +254,9 @@ export function WithdrawalRequests() {
                         <span
                             className="px-2 py-1 rounded text-xs font-medium"
                             style={{
-                                backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                                color: 'rgb(249, 115, 22)',
-                                border: '1px solid rgb(249, 115, 22)'
+                                backgroundColor: 'rgb(var(--brand-rgb) / 0.1)',
+                                color: 'var(--color-primary)',
+                                border: '1px solid var(--color-primary)'
                             }}
                         >
                             Bank Details
@@ -348,7 +348,7 @@ export function WithdrawalRequests() {
                         navigate(`/admin/wallet/withdrawal-requests/${withdrawal.id}`);
                     }}
                     className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:opacity-80"
-                    style={{ backgroundColor: 'var(--warning)', color: 'white' }}
+                    style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
                     title="View Details"
                 >
                     <Eye size={16} />
@@ -385,9 +385,9 @@ export function WithdrawalRequests() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <ArrowUpRight size={28} style={{ color: 'var(--warning)' }} />
+                    <ArrowUpRight size={28} style={{ color: 'var(--color-primary)' }} />
                     <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Withdrawal Requests</h2>
-                    <span className="ml-2 px-3 py-1 rounded-full text-sm" style={{ backgroundColor: 'var(--warning)', color: 'white' }}>
+                    <span className="ml-2 px-3 py-1 rounded-full text-sm" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                         {withdrawals.length} pending
                     </span>
                 </div>
@@ -569,7 +569,7 @@ export function WithdrawalRequests() {
                                 <td className="px-4 py-4">
                                     <div className="flex flex-col">
                                         <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Total Amount</span>
-                                        <span className="text-lg font-bold" style={{ color: 'var(--warning)' }}>
+                                        <span className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>
                                             ${filteredWithdrawals.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0).toFixed(2)}
                                         </span>
                                     </div>

@@ -93,7 +93,7 @@ export function CreateCountry() {
                     </label>
                     <input
                         type="text" name="name" value={form.name} onChange={handleChange}
-                        className="w-full p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-shadow"
+                        className="w-full p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-brand transition-shadow"
                     />
                 </div>
 
@@ -106,25 +106,25 @@ export function CreateCountry() {
                     <div className="flex flex-col gap-3">
                         <label className="flex items-center gap-3 cursor-pointer w-max">
                             <input type="checkbox" name="bank" checked={form.bank} onChange={handleChange}
-                                className="w-4 h-4 rounded border-[var(--border)] text-amber-500 focus:ring-amber-500" />
+                                className="w-4 h-4 rounded border-[var(--border)] text-brand focus:ring-brand" />
                             <span className="text-[var(--text-primary)] text-sm">Bank</span>
                         </label>
 
                         <label className="flex items-center gap-3 cursor-pointer w-max">
                             <input type="checkbox" name="paypal" checked={form.paypal} onChange={handleChange}
-                                className="w-4 h-4 rounded border-[var(--border)] text-amber-500 focus:ring-amber-500" />
+                                className="w-4 h-4 rounded border-[var(--border)] text-brand focus:ring-brand" />
                             <span className="text-[var(--text-primary)] text-sm">Paypal ID</span>
                         </label>
 
                         <label className="flex items-center gap-3 cursor-pointer w-max">
                             <input type="checkbox" name="qr_code" checked={form.qr_code} onChange={handleChange}
-                                className="w-4 h-4 rounded border-[var(--border)] text-amber-500 focus:ring-amber-500" />
+                                className="w-4 h-4 rounded border-[var(--border)] text-brand focus:ring-brand" />
                             <span className="text-[var(--text-primary)] text-sm">QR Code</span>
                         </label>
 
                         <label className="flex items-center gap-3 cursor-pointer w-max">
                             <input type="checkbox" name="upi_id" checked={form.upi_id} onChange={handleChange}
-                                className="w-4 h-4 rounded border-[var(--border)] text-amber-500 focus:ring-amber-500" />
+                                className="w-4 h-4 rounded border-[var(--border)] text-brand focus:ring-brand" />
                             <span className="text-[var(--text-primary)] text-sm">UPI ID</span>
                         </label>
                     </div>
