@@ -281,6 +281,7 @@ export function SitesList() {
                                     onToggleSelect={() => handleSelectRow(site.id)}
                                     onTrafficSaved={(t) => handleTrafficSaved(site.id, t)}
                                     fc={sf.fcOn}
+                                    fcCategory={sf.fcCategory}
                                     style={{ animationDelay: `${index * 50}ms` }}
                                 />
                             ))}

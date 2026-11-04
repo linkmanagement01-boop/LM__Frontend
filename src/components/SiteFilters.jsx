@@ -24,6 +24,12 @@ const SORTS = [
     { v: 'traffic_desc', l: 'Most traffic' }
 ];
 const TABS = [['', 'All', LayoutGrid], ['gp', 'Guest Post', FileText], ['ne', 'Niche Edit', Link2]];
+/**
+ * FC (Forbidden Category) content types. Sites don't record which ones they take – an FC site takes FC content –
+ * so with FC on the category list is these three, and the one picked only names the category on the cards (Casino by default).
+ */
+export const FC_CATEGORIES = ['Crypto', 'CBD', 'Casino'];
+const FC_DEFAULT = 'Casino';
 
 /**
  * Filter state for a Sites page. `filters` = what's typed in the panel, `applied` = what the list uses.
@@ -39,6 +45,7 @@ export function useSiteFilters({ role, defaults = {}, onChange }) {
 
     // Categories of the listed sites (FC sites only when FC is on)
     useEffect(() => {
+        if (applied.fc) { setCategories(FC_CATEGORIES.map(name => ({ name }))); setCatLoading(false); return; }
         setCatLoading(true);
         const p = new URLSearchParams();
         if (applied.fc) p.set('fc', '1');
@@ -65,7 +72,7 @@ export function useSiteFilters({ role, defaults = {}, onChange }) {
     const apply = () => changed({ ...filters, search: applied.search, fc: applied.fc, type: applied.type, sort: applied.sort });
     const reset = () => { setFilters(start); changed(start); };
     // FC (FC prices) applies straight away; the price range is for the other price list, so it's cleared
-    const setFc = (on) => setNow('fc', on ? '1' : '', { min_price: '', max_price: '' });
+    const setFc = (on) => setNow('fc', on ? '1' : '', { min_price: '', max_price: '', category: '' });
 
     const activeCount = Object.entries(applied).filter(([k, v]) => !TOOLBAR_KEYS.includes(k) && v !== '' && v !== start[k]).length;
 
@@ -80,11 +87,15 @@ export function useSiteFilters({ role, defaults = {}, onChange }) {
         put('search_niche', a.website_niche.trim());
         put('filter_new_arrival', a.new_arrival);
         put('fc', a.fc);
-        ['type', 'category', 'sort', 'min_price', 'max_price', 'min_dr', 'max_dr', 'min_da', 'max_da', 'min_traffic', 'max_traffic'].forEach(k => put(k, a[k]));
+        ['type', ...(a.fc ? [] : ['category']), 'sort', 'min_price', 'max_price', 'min_dr', 'max_dr', 'min_da', 'max_da', 'min_traffic', 'max_traffic'].forEach(k => put(k, a[k]));
         return out;
     };
 
-    return { filters, applied, set, setNow, setFc, apply, reset, activeCount, categories, catLoading, params, fcOn: applied.fc === '1' };
+    const fcOn = applied.fc === '1';
+    // the category the cards show while FC is on
+    const fcCategory = fcOn ? (applied.category || FC_DEFAULT) : null;
+
+    return { filters, applied, set, setNow, setFc, apply, reset, activeCount, categories, catLoading, params, fcOn, fcCategory };
 }
 
 // ─── Panel ────────────────────────────────────────────────────────────
