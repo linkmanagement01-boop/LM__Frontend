@@ -282,7 +282,7 @@ export const CreateOrder = () => {
             <div>
               <label className="premium-label">Order Type <span className="text-red-400">*</span></label>
               <div className="relative">
-                <select className="premium-input appearance-none" value={form.orderType} onChange={onChange('orderType')}>
+                <select className="premium-input appearance-none w-full" value={form.orderType} onChange={onChange('orderType')}>
                   {ORDER_TYPE_OPTIONS.map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
@@ -294,7 +294,7 @@ export const CreateOrder = () => {
               <label className="premium-label">Assign Team <span className="text-red-400">*</span></label>
               <div className="relative">
                 <select
-                  className="premium-input appearance-none"
+                  className="premium-input appearance-none w-full"
                   value={form.assigned_team_id}
                   onChange={onChange('assigned_team_id')}
                   disabled={loadingTeams}
@@ -312,7 +312,7 @@ export const CreateOrder = () => {
             <div>
               <label className="premium-label">Order Reference ID <span className="text-red-400">*</span></label>
               <input
-                className="premium-input"
+                className="premium-input w-full"
                 value={form.manual_order_id}
                 onChange={onChange('manual_order_id')}
                 placeholder="e.g. ORD-2024-001"
@@ -325,7 +325,7 @@ export const CreateOrder = () => {
             <div>
               <label className="premium-label">Client Name <span className="text-red-400">*</span></label>
               <input
-                className="premium-input"
+                className="premium-input w-full"
                 value={form.client_name}
                 onChange={onChange('client_name')}
                 placeholder="Enter client's full name"
@@ -335,7 +335,7 @@ export const CreateOrder = () => {
               <label className="premium-label">Client Website <span className="text-red-400">*</span></label>
               <div className="relative">
                 <input
-                  className="premium-input pl-10"
+                  className="premium-input pl-10 w-full"
                   value={form.client_website}
                   onChange={onChange('client_website')}
                   placeholder="domain.com"
@@ -348,7 +348,7 @@ export const CreateOrder = () => {
               <input
                 type="number"
                 min={1}
-                className="premium-input"
+                className="premium-input w-full"
                 value={form.no_of_links}
                 onChange={onChange('no_of_links')}
               />
@@ -393,7 +393,7 @@ export const CreateOrder = () => {
             <div>
               <label className="premium-label">Package Level <span className="text-red-400">*</span></label>
               <div className="relative">
-                <select className="premium-input appearance-none" value={form.order_package} onChange={onChange('order_package')}>
+                <select className="premium-input appearance-none w-full" value={form.order_package} onChange={onChange('order_package')}>
                   <option value="">Select Package</option>
                   {(form.contentType === 'Guest Post' ? GP_PACKAGE_OPTIONS : NICHE_PACKAGE_OPTIONS).map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
@@ -413,7 +413,7 @@ export const CreateOrder = () => {
           <div className="mb-6">
             <label className="premium-label">Target Category <span className="text-red-400">*</span></label>
             <div className="relative">
-              <select className="premium-input appearance-none" value={form.category} onChange={onChange('category')}>
+              <select className="premium-input appearance-none w-full" value={form.category} onChange={onChange('category')}>
                 <option value="">Select Category</option>
                 {(form.fc ? FC_YES_CATEGORIES : FC_NO_CATEGORIES).map(opt => (
                   <option key={opt} value={opt}>{opt}</option>

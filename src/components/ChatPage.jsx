@@ -288,18 +288,19 @@ export function ChatPage({ userRole = 'User' }) {
         return dName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     };
 
+    // one colour per role (identity, not status); text shades dark enough for the light background
     const getRoleBadgeColor = (role) => {
         switch (role) {
             case 'manager': case 'admin': case 'super_admin':
-                return { bg: 'rgba(139, 92, 246, 0.15)', color: '#a78bfa', border: 'rgba(139, 92, 246, 0.3)' };
+                return { bg: 'rgba(124, 58, 237, 0.12)', color: '#6D28D9', border: 'rgba(124, 58, 237, 0.3)' };
             case 'writer':
-                return { bg: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: 'rgba(59, 130, 246, 0.3)' };
+                return { bg: 'rgba(37, 99, 235, 0.12)', color: '#1D4ED8', border: 'rgba(37, 99, 235, 0.3)' };
             case 'team':
-                return { bg: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: 'rgba(16, 185, 129, 0.3)' };
+                return { bg: 'rgba(5, 150, 105, 0.12)', color: '#047857', border: 'rgba(5, 150, 105, 0.3)' };
             case 'vendor':
-                return { bg: 'rgba(251, 146, 60, 0.15)', color: '#fb923c', border: 'rgba(251, 146, 60, 0.3)' };
+                return { bg: 'rgba(219, 39, 119, 0.10)', color: '#BE185D', border: 'rgba(219, 39, 119, 0.28)' };
             default:
-                return { bg: 'rgba(100, 116, 139, 0.15)', color: '#94a3b8', border: 'rgba(100, 116, 139, 0.3)' };
+                return { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.3)' };
         }
     };
 
@@ -405,7 +406,7 @@ export function ChatPage({ userRole = 'User' }) {
                                 {getRoleLabel(user.role)}
                             </span>
                             {user.unread_count > 0 && (
-                                <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-[var(--primary-cyan)] text-black text-[10px] font-bold px-1">
+                                <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-[var(--primary-cyan)] text-white text-[10px] font-bold px-1">
                                     {user.unread_count}
                                 </span>
                             )}
@@ -675,12 +676,12 @@ export function ChatPage({ userRole = 'User' }) {
                                                         )}
                                                         <div
                                                             className={`px-3.5 py-2 text-sm leading-relaxed ${mine
-                                                                ? 'bg-[var(--primary-cyan)] text-black rounded-2xl rounded-br-md'
+                                                                ? 'bg-[var(--primary-cyan)] text-white rounded-2xl rounded-br-md'
                                                                 : 'bg-[var(--card-background)] text-[var(--text-primary)] border border-[var(--border)] rounded-2xl rounded-bl-md'
                                                                 } ${msg._optimistic ? 'opacity-70' : ''}`}
                                                         >
-                                                            <p className="whitespace-pre-wrap break-words">{msg.message}</p>
-                                                            <p className={`text-[9px] mt-1 text-right ${mine ? 'text-black/50' : 'text-[var(--text-muted)]'}`}>
+                                                            <p className="whitespace-pre-wrap break-words text-inherit">{msg.message}</p>
+                                                            <p className={`text-[9px] mt-1 text-right ${mine ? 'text-white/70' : 'text-[var(--text-muted)]'}`}>
                                                                 {new Date(msg.created_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}
                                                             </p>
                                                         </div>
@@ -719,8 +720,8 @@ export function ChatPage({ userRole = 'User' }) {
                                     disabled={!newMessage.trim() || sending}
                                     className="flex-shrink-0 w-[42px] h-[42px] rounded-xl flex items-center justify-center transition-all 
                     disabled:opacity-30 disabled:cursor-not-allowed
-                    bg-[var(--primary-cyan)] text-black hover:bg-[var(--primary-cyan)]/80 
-                    shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                    bg-[var(--primary-cyan)] text-white hover:text-white hover:bg-[var(--color-primary-hover)] 
+                    shadow-[0_0_15px_rgb(var(--brand-rgb)/0.2)]"
                                 >
                                     <Send className="h-4 w-4" />
                                 </button>
@@ -751,7 +752,7 @@ export function ChatPage({ userRole = 'User' }) {
                                     setShowNewChatModal(true); setNewChatSearch(''); setNewChatResults([]); 
                                 }
                             }}
-                            className="premium-btn bg-[var(--primary-cyan)] text-black hover:bg-[var(--primary-cyan)]/80 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                            className="premium-btn bg-[var(--primary-cyan)] text-white hover:text-white hover:bg-[var(--color-primary-hover)] shadow-[0_0_15px_rgb(var(--brand-rgb)/0.2)]"
                         >
                             <UserPlus className="h-4 w-4" />
                             Start New Chat

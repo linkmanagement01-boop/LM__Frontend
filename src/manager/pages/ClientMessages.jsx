@@ -151,7 +151,7 @@ export function ClientMessagesView() {
                                     </span>
                                     <span className="flex items-center justify-between gap-2 mt-0.5">
                                         <span className="truncate text-xs text-[var(--text-muted)]">{typingFor === cv.client_user_id ? 'typing…' : `${cv.last_sender === 'staff' ? 'You: ' : ''}${cv.last_message_preview || ''}`}</span>
-                                        {cv.staff_unread > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-bold grid place-items-center shrink-0">{cv.staff_unread}</span>}
+                                        {cv.staff_unread > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[10px] font-bold grid place-items-center shrink-0">{cv.staff_unread}</span>}
                                     </span>
                                 </span>
                             </button>
@@ -195,7 +195,7 @@ export function ClientMessagesView() {
                             <form onSubmit={send} className="border-t border-[var(--border)] p-3 bg-[var(--surface)]">
                                 {(order || files.length > 0) && (
                                     <div className="flex flex-wrap gap-1.5 mb-2">
-                                        {order && <span className="inline-flex items-center gap-1 rounded-md bg-orange-50 border border-orange-200 px-2 py-1 text-xs font-semibold text-orange-800"><ClipboardList size={12} />About order {order.number}<button type="button" onClick={() => setOrder(null)} aria-label="Remove order"><X size={12} /></button></span>}
+                                        {order && <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 border border-violet-200 px-2 py-1 text-xs font-semibold text-violet-800"><ClipboardList size={12} />About order {order.number}<button type="button" onClick={() => setOrder(null)} aria-label="Remove order"><X size={12} /></button></span>}
                                         {files.map((f, i) => <span key={i} className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700">{isImage(f) ? <ImageIcon size={12} /> : <FileText size={12} />}<span className="max-w-[140px] truncate">{f.name}</span><button type="button" onClick={() => setFiles(l => l.filter((_, j) => j !== i))} aria-label="Remove file"><X size={12} /></button></span>)}
                                     </div>
                                 )}

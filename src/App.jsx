@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
+import { FaqPage } from './pages/FaqPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { ChangePasswordRedirect } from './components/ChangePasswordRedirect.jsx';
@@ -20,6 +21,7 @@ import { TeamMembers as AdminTeamMembers } from './admin/pages/TeamMembers.jsx';
 import { UserPermissions as AdminUserPermissions } from './admin/pages/UserPermissions.jsx';
 import { AddTeamMember } from './admin/pages/AddTeamMember.jsx';
 import { ChangePassword as AdminChangePassword } from './admin/pages/ChangePassword.jsx';
+import { Profile as AdminProfile } from './admin/pages/Profile.jsx';
 import { ChangePassword as WriterChangePassword } from './writer/pages/ChangePassword.jsx';
 
 // Admin Sites pages
@@ -96,6 +98,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/faq" element={<FaqPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/change-password" element={<ChangePasswordRedirect />} />
@@ -115,6 +118,7 @@ function App() {
           <Route path="team-members" element={<AdminTeamMembers />} />
           <Route path="team-members/add" element={<AddTeamMember />} />
           <Route path="users/:id/permissions" element={<AdminUserPermissions />} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="change-password" element={<AdminChangePassword />} />
 
           {/* Sites routes */}

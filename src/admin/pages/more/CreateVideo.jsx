@@ -102,7 +102,7 @@ export function CreateVideo() {
                 {/* Active Toggle */}
                 <div className="mb-8">
                     <label className="flex items-center gap-3 cursor-pointer w-max">
-                        <div className={`relative w-11 h-6 rounded-full transition-colors ${form.is_active ? 'bg-amber-500' : 'bg-gray-600'}`}>
+                        <div className={`relative w-11 h-6 rounded-full transition-colors ${form.is_active ? 'bg-brand' : 'bg-gray-600'}`}>
                             <div className={`absolute top-[2px] w-5 h-5 rounded-full bg-white transition-all ${form.is_active ? 'left-[22px]' : 'left-[2px]'}`} />
                         </div>
                         <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} className="hidden" />

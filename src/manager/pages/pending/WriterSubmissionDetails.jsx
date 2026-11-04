@@ -218,7 +218,7 @@ export function WriterSubmissionDetails() {
                 <div className="flex flex-col gap-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                            <h1 className="text-2xl font-bold text-[var(--text-main)]">
                                 {rejectionMode ? 'Reject Writer Content' : 'Push To Blogger'}
                             </h1>
                             <p className="text-[var(--text-muted)] text-sm mt-1">

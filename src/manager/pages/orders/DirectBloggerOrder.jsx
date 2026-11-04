@@ -268,7 +268,7 @@ export const DirectBloggerOrder = () => {
                         <ArrowLeft className="h-5 w-5 text-[var(--text-secondary)]" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        <h1 className="text-2xl font-bold text-[var(--text-main)]">
                             Direct Push to Blogger
                         </h1>
                         <p className="text-[var(--text-muted)]">Full workflow bypass: Order → Websites → All Details → Blogger (Bypass Team + Writer)</p>
@@ -297,23 +297,23 @@ export const DirectBloggerOrder = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div>
                             <label className="premium-label">Order Type</label>
-                            <select className="premium-input" value={form.order_type_toggle} onChange={onChange('order_type_toggle')}>
+                            <select className="premium-input w-full" value={form.order_type_toggle} onChange={onChange('order_type_toggle')}>
                                 {ORDER_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="premium-label">Client Name <span className="text-red-400">*</span></label>
-                            <input className="premium-input" value={form.client_name} onChange={onChange('client_name')} placeholder="Enter client's name" />
+                            <input className="premium-input w-full" value={form.client_name} onChange={onChange('client_name')} placeholder="Enter client's name" />
                         </div>
                         <div>
                             <label className="premium-label">Content Type</label>
-                            <select className="premium-input" value={form.contentType} onChange={onChange('contentType')}>
+                            <select className="premium-input w-full" value={form.contentType} onChange={onChange('contentType')}>
                                 {CONTENT_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="premium-label">Package Level</label>
-                            <select className="premium-input" value={form.order_package} onChange={onChange('order_package')}>
+                            <select className="premium-input w-full" value={form.order_package} onChange={onChange('order_package')}>
                                 <option value="">Select Package</option>
                                 {(isGuestPost ? GP_PACKAGE_OPTIONS : NICHE_PACKAGE_OPTIONS).map(opt => (
                                     <option key={opt} value={opt}>{opt}</option>
@@ -325,18 +325,18 @@ export const DirectBloggerOrder = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label className="premium-label">Category</label>
-                            <select className="premium-input" value={form.category} onChange={onChange('category')}>
+                            <select className="premium-input w-full" value={form.category} onChange={onChange('category')}>
                                 <option value="">Select Category</option>
                                 {FC_NO_CATEGORIES.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="premium-label">{isSubOrder ? 'Existing Order ID' : 'Order Reference ID'} {isSubOrder && <span className="text-red-400">*</span>}</label>
-                            <input className="premium-input" value={form.manual_order_id} onChange={onChange('manual_order_id')} placeholder={isSubOrder ? 'Enter existing order ID' : 'Optional'} />
+                            <input className="premium-input w-full" value={form.manual_order_id} onChange={onChange('manual_order_id')} placeholder={isSubOrder ? 'Enter existing order ID' : 'Optional'} />
                         </div>
                         <div>
                             <label className="premium-label">No. of Links (Auto)</label>
-                            <div className="premium-input bg-[var(--background-dark)] text-purple-400 font-bold flex items-center">
+                            <div className="premium-input bg-[var(--background-dark)] text-purple-400 font-bold flex items-center w-full">
                                 {noOfLinks} {noOfLinks === 1 ? 'website' : 'websites'} selected
                             </div>
                         </div>

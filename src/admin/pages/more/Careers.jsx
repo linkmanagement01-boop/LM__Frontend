@@ -110,7 +110,7 @@ export function Careers() {
                                             )}
                                         </td>
                                         <td style={{ padding: '16px 20px', textAlign: 'center' }}>
-                                            <Link to={`/admin/more/careers/edit/${career.id}`} style={{ color: '#f59e0b' }}>
+                                            <Link to={`/admin/more/careers/edit/${career.id}`} style={{ color: 'var(--color-primary)' }}>
                                                 <Edit size={18} />
                                             </Link>
                                         </td>

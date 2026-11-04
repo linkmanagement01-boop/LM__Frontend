@@ -12,7 +12,8 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-const ORANGE = '#f97316';
+// The panel's brand colour (orange, violet in the admin panel) – read from the canvas, so charts follow the theme
+const brand = (el, a = 1) => `rgb(${(el && getComputedStyle(el).getPropertyValue('--brand-rgb').trim()) || '249 115 22'} / ${a})`;
 
 const compact = (n) => (n === null || n === undefined ? '-' : Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n));
 
@@ -53,6 +54,8 @@ export const trafficRowFields = (t) => ({
   ahrefs_countries: t.top_countries,
   ahrefs_checked_at: t.checked_at,
   growth_pct: t.growth_pct,
+  // the site's Traffic column follows the Ahrefs number (backend updates it; site_traffic = what the list shows)
+  ...(t.site_traffic !== undefined ? { traffic: t.site_traffic } : {}),
   // Status rules (backend) – a new rule result replaces the old one; no result keeps an open one
   ...(t.site_status ? { site_status: t.site_status } : {}),
   ...(t.rule_action ? { ahrefs_rule: t.rule_action, ahrefs_rule_resolved: null } : {}),
@@ -222,26 +225,29 @@ export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' 
     <>
       <div className="flex items-center gap-2">
         {selected.length > 0 && (
-          <button disabled={running} onClick={() => run(selected)} className={`${btn} border-orange-500/30 bg-orange-500/10 text-orange-500 hover:bg-orange-500/20`}
+          <button disabled={running} onClick={() => run(selected)} className={`${btn} border-brand/30 bg-brand/10 text-brand hover:bg-brand/20`}
             title={selected.length > BATCH_MAX ? `Only the first ${BATCH_MAX} are checked per batch` : 'Check Ahrefs traffic of the selected sites, one after another'}>
             <ListChecks className="h-3.5 w-3.5" />
             Check traffic ({selected.length > BATCH_MAX ? `first ${BATCH_MAX} of ${selected.length}` : `${selected.length} selected`})
           </button>
         )}
-        <button disabled={running || !!loadingType || queue?.unchecked === 0} onClick={() => runQueue('unchecked')}
-          className={`${btn} border-[var(--border)] hover:border-orange-400 hover:text-orange-500`}
-          style={{ color: 'var(--text-secondary)' }} title="Check the next never-checked sites from the whole list, newest added first">
-          {loadingType === 'unchecked' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
-          {queue?.unchecked === 0 ? 'All sites checked' : `Check ${QUICK_COUNT} unchecked${queue ? ` (${queue.unchecked.toLocaleString()} left)` : ''}`}
-        </button>
-        <button disabled={running || !!loadingType} onClick={() => runQueue('recheck')}
-          className={`${btn} border-[var(--border)] hover:border-orange-400 hover:text-orange-500`}
-          style={{ color: 'var(--text-secondary)' }}
-          title={`Re-check the sites whose last check is oldest (checked more than ${queue?.recheck_min_days || 7} days ago) – repeated clicks go through the whole list`}>
-          {loadingType === 'recheck' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-          Re-check {QUICK_COUNT}{queue ? ` (${queue.recheck_due.toLocaleString()} due)` : ''}
-        </button>
-        {note && <span className="text-xs font-medium text-orange-500">{note}</span>}
+        {/* sites selected → the selection is what gets checked, so the quick buttons step aside (keeps the bar on one row) */}
+        {selected.length === 0 && (<>
+          <button disabled={running || !!loadingType || queue?.unchecked === 0} onClick={() => runQueue('unchecked')}
+            className={`${btn} border-[var(--border)] hover:border-brand hover:text-brand`}
+            style={{ color: 'var(--text-secondary)' }} title="Check the next never-checked sites from the whole list, newest added first">
+            {loadingType === 'unchecked' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
+            {queue?.unchecked === 0 ? 'All sites checked' : `Check ${QUICK_COUNT} unchecked${queue ? ` (${queue.unchecked.toLocaleString()} left)` : ''}`}
+          </button>
+          <button disabled={running || !!loadingType} onClick={() => runQueue('recheck')}
+            className={`${btn} border-[var(--border)] hover:border-brand hover:text-brand`}
+            style={{ color: 'var(--text-secondary)' }}
+            title={`Re-check the sites whose last check is oldest (checked more than ${queue?.recheck_min_days || 7} days ago) – repeated clicks go through the whole list`}>
+            {loadingType === 'recheck' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            Re-check {QUICK_COUNT}{queue ? ` (${queue.recheck_due.toLocaleString()} due)` : ''}
+          </button>
+        </>)}
+        {note && <span className="text-xs font-medium text-brand">{note}</span>}
       </div>
 
       {progress && createPortal(<BatchProgress progress={progress} onClose={() => setProgress(null)} />, document.body)}
@@ -258,7 +264,7 @@ function BatchProgress({ progress: p, onClose }) {
       style={{ zIndex: 9998, backgroundColor: 'var(--card-background)', border: '1px solid var(--border)' }}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-          {running ? <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
+          {running ? <Loader2 className="h-4 w-4 animate-spin text-brand" />
             : p.status === 'finished' ? <CheckCircle2 className="h-4 w-4 text-green-500" />
             : <AlertCircle className="h-4 w-4 text-red-500" />}
           {running ? 'Checking traffic…' : p.status === 'finished' ? 'Bulk check finished' : 'Bulk check stopped'}
@@ -273,7 +279,7 @@ function BatchProgress({ progress: p, onClose }) {
             <span><span className="text-green-500 font-bold">{p.saved} saved</span>{p.skipped > 0 && <span className="text-red-500 font-bold"> · {p.skipped} skipped</span>}</span>
           </div>
           <div className="h-2 rounded-full overflow-hidden mb-2" style={{ backgroundColor: 'var(--border)' }}>
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #fb923c, ${ORANGE})` }} />
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, rgb(var(--brand-rgb) / 0.7), rgb(var(--brand-rgb)))' }} />
           </div>
         </>
       )}
@@ -303,24 +309,24 @@ export function TrafficChart({ history, height = 220 }) {
     labels: history.map(h => monthLabel(h.date)),
     datasets: [{
       data: history.map(h => h.traffic),
-      borderColor: ORANGE,
+      borderColor: (c) => brand(c.chart.canvas),
       borderWidth: 2.5,
       cubicInterpolationMode: 'monotone', // smooth without dipping below/above the real points
       fill: true,
       backgroundColor: (ctx) => {
         const { chart } = ctx;
-        if (!chart.chartArea) return 'rgba(249,115,22,0.15)';
+        if (!chart.chartArea) return brand(chart.canvas, 0.15);
         const g = chart.ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
-        g.addColorStop(0, 'rgba(249,115,22,0.35)');
-        g.addColorStop(1, 'rgba(249,115,22,0.02)');
+        g.addColorStop(0, brand(chart.canvas, 0.35));
+        g.addColorStop(1, brand(chart.canvas, 0.02));
         return g;
       },
       pointRadius: history.length > 14 ? 0 : 3,
       pointBackgroundColor: '#fff',
-      pointBorderColor: ORANGE,
+      pointBorderColor: (c) => brand(c.chart.canvas),
       pointBorderWidth: 2,
       pointHoverRadius: 6,
-      pointHoverBackgroundColor: ORANGE,
+      pointHoverBackgroundColor: (c) => brand(c.chart.canvas),
       pointHoverBorderColor: '#fff',
     }],
   };
@@ -369,7 +375,7 @@ export function CountryList({ countries }) {
           <Flag code={c.country} />
           <span className="w-36 truncate font-medium" style={{ color: 'var(--text-primary)' }}>{countryName(c.country)}</span>
           <div className="flex-1 h-2 rounded-full overflow-hidden min-w-[60px]" style={{ backgroundColor: 'var(--border)' }}>
-            <div className="h-full rounded-full" style={{ width: `${Math.min(100, c.share || 0)}%`, background: `linear-gradient(90deg, #fb923c, ${ORANGE})` }} />
+            <div className="h-full rounded-full" style={{ width: `${Math.min(100, c.share || 0)}%`, background: 'linear-gradient(90deg, rgb(var(--brand-rgb) / 0.7), rgb(var(--brand-rgb)))' }} />
           </div>
           <span className="w-14 text-right text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
             {c.share !== null && c.share !== undefined ? `${Number(c.share).toFixed(1)}%` : '-'}
@@ -387,7 +393,7 @@ export function CountryList({ countries }) {
  * Opens on hover (desktop) or click; a click pins it open until clicking outside.
  * Rendered in a portal with fixed position so table scroll areas don't cut it off.
  */
-function HoverPopover({ trigger, children, width = 520 }) {
+export function HoverPopover({ trigger, children, width = 520 }) {
   const btnRef = useRef(null);
   const popRef = useRef(null);
   const closeTimer = useRef(null);
@@ -433,7 +439,7 @@ function HoverPopover({ trigger, children, width = 520 }) {
         onMouseEnter={show}
         onMouseLeave={hide}
         onClick={(e) => { e.stopPropagation(); if (pinned) { setPinned(false); setOpen(false); } else { show(); setPinned(true); } }}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-colors ${open ? 'border-orange-400 bg-orange-500/10 text-orange-500' : 'border-[var(--border)] hover:border-orange-400 hover:text-orange-500'}`}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-colors ${open ? 'border-brand bg-brand/10 text-brand' : 'border-[var(--border)] hover:border-brand hover:text-brand'}`}
         style={open ? undefined : { color: 'var(--text-secondary)' }}
       >
         {trigger}
@@ -465,7 +471,7 @@ function PopoverHeader({ domain, traffic, title }) {
       <div className="flex gap-5 shrink-0 text-right">
         <div>
           <div className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Organic traffic</div>
-          <div className="text-xl font-extrabold text-orange-500">{compact(traffic.organic_traffic)}</div>
+          <div className="text-xl font-extrabold text-brand">{compact(traffic.organic_traffic)}</div>
         </div>
         <div>
           <div className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Traffic value</div>
@@ -517,7 +523,7 @@ export function Sparkline({ history, width = 120, height = 34 }) {
   if (!history || history.length < 2) return null;
   const data = {
     labels: history.map(h => monthLabel(h.date)),
-    datasets: [{ data: history.map(h => h.traffic), borderColor: ORANGE, borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(249,115,22,0.12)', cubicInterpolationMode: 'monotone' }],
+    datasets: [{ data: history.map(h => h.traffic), borderColor: (c) => brand(c.chart.canvas), borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: (c) => brand(c.chart.canvas, 0.12), cubicInterpolationMode: 'monotone' }],
   };
   const options = {
     responsive: false, maintainAspectRatio: false, animation: false,
@@ -535,7 +541,7 @@ export function AhrefsStrip({ site, role, onSaved }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2" onClick={(e) => e.stopPropagation()}>
-      <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-md bg-orange-500/10 text-orange-500 border border-orange-500/20">
+      <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-md bg-brand/10 text-brand border border-brand/20">
         <Activity className="h-3 w-3" /> Ahrefs
       </span>
 
@@ -544,7 +550,7 @@ export function AhrefsStrip({ site, role, onSaved }) {
       ) : (
         <>
           <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            Organic traffic <b className="text-sm text-orange-500 ml-1">{t.organic_traffic !== null ? Number(t.organic_traffic).toLocaleString() : '-'}</b>
+            Organic traffic <b className="text-sm text-brand ml-1">{t.organic_traffic !== null ? Number(t.organic_traffic).toLocaleString() : '-'}</b>
             <span className="ml-1">/ mo</span>
           </span>
           <GrowthPill pct={site.growth_pct} />
@@ -573,6 +579,44 @@ export function AhrefsStrip({ site, role, onSaved }) {
       <span>
         <TrafficCheckButton site={site} role={role} size="xs" onSaved={onSaved} label={t ? 'Re-check' : 'Check traffic'} />
       </span>
+    </div>
+  );
+}
+
+/** Ahrefs numbers as label/value rows – the "Volume" column of the admin site card (Re-check sits in the card header) */
+export function AhrefsVolume({ site, role, Row }) {
+  const t = fromRow(site);
+  const history = t?.history || [];
+  const countries = t?.top_countries || [];
+  const top = countries[0];
+
+  return (
+    <div className="space-y-2.5" onClick={(e) => e.stopPropagation()}>
+      <Row label="Ahrefs traffic" value={t && t.organic_traffic !== null ? (
+        countries.length > 0 ? (
+          <HoverPopover width={440} trigger={<>{Number(t.organic_traffic).toLocaleString()} <Flag code={top.country} /></>}>
+            <PopoverHeader domain={site.root_domain} traffic={t} title="Top countries" />
+            <CountryList countries={countries} />
+            <div className="text-[11px] mt-4 text-right" style={{ color: 'var(--text-muted)' }}>Share of organic traffic · Ahrefs · checked {checkedLabel(t.checked_at)}</div>
+          </HoverPopover>
+        ) : Number(t.organic_traffic).toLocaleString()
+      ) : <span style={{ color: 'var(--text-muted)' }}>Not checked</span>} />
+      {t && (
+        <Row label={<span title="Last 3 months vs the 3 months before">Growth</span>} value={
+          <span className="inline-flex items-center gap-1.5">
+            {history.length > 1 && (
+              <HoverPopover trigger={<><TrendingUp className="h-3.5 w-3.5" /> Graph</>}>
+                <PopoverHeader domain={site.root_domain} traffic={t} title="Organic traffic graph" />
+                <TrafficChart history={history} height={240} />
+                <div className="text-[11px] mt-3 text-right" style={{ color: 'var(--text-muted)' }}>Ahrefs · checked {checkedLabel(t.checked_at)}</div>
+              </HoverPopover>
+            )}
+            <GrowthPill pct={site.growth_pct} />
+            <RuleBadge site={site} role={role} />
+          </span>
+        } />
+      )}
+      {t && <div className="text-[11px] text-right" style={{ color: 'var(--text-muted)' }}>Checked {checkedLabel(t.checked_at)}</div>}
     </div>
   );
 }
@@ -621,7 +665,7 @@ export function SiteTrafficCard({ site, role }) {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)' }}>
-              <div className="text-2xl font-bold text-orange-500">{compact(traffic.organic_traffic)}</div>
+              <div className="text-2xl font-bold text-brand">{compact(traffic.organic_traffic)}</div>
               <div className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Organic traffic / month</div>
             </div>
             <div className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)' }}>

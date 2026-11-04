@@ -243,7 +243,7 @@ export function PaymentHistory() {
             return (
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-orange-500/20 text-orange-500 flex items-center gap-1">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-brand/20 text-brand flex items-center gap-1">
                             <Smartphone size={10} /> UPI
                         </span>
                     </div>

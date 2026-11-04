@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { RichTextEditor } from '../../../components/RichTextEditor';
+import { Trash2 } from 'lucide-react';
+import { FaqFields, plainText, btnPrimary, btnGhost } from './FaqShared';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -11,64 +12,48 @@ export function EditFAQ() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const [form, setForm] = useState({
-        question: '',
-        answer: '',
-        is_active: true
-    });
+    const [form, setForm] = useState({ question: '', answer: '', is_active: true, category: 'advertiser', sort_order: 0 });
 
     useEffect(() => {
-        fetchFaq();
-    }, [id]);
-
-    const fetchFaq = async () => {
-        try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch(`${API_BASE_URL}/admin/faqs/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await response.json();
-            if (response.ok && data.faq) {
-                setForm({
-                    question: data.faq.question || '',
-                    answer: data.faq.answer || '',
-                    is_active: data.faq.is_active ?? data.faq.active ?? true
-                });
-            } else {
-                toast.error('FAQ not found');
+        const load = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`${API_BASE_URL}/admin/faqs/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await response.json();
+                if (response.ok && data.faq) {
+                    setForm({
+                        // older questions were saved as rich text – edit them as plain text
+                        question: plainText(data.faq.question),
+                        answer: data.faq.answer || '',
+                        is_active: data.faq.is_active ?? true,
+                        category: data.faq.category || 'advertiser',
+                        sort_order: data.faq.sort_order ?? 0
+                    });
+                } else {
+                    toast.error('FAQ not found');
+                    navigate('/admin/more/faqs');
+                }
+            } catch (error) {
+                toast.error('Failed to fetch FAQ');
                 navigate('/admin/more/faqs');
+            } finally {
+                setLoading(false);
             }
-        } catch (error) {
-            toast.error('Failed to fetch FAQ');
-            navigate('/admin/more/faqs');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setForm(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
-    };
+        };
+        load();
+    }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSubmit = async () => {
-        if (!form.question || !form.answer) {
+        if (!form.question.trim() || !plainText(form.answer)) {
             toast.error('Please fill all required fields');
             return;
         }
-
         setSaving(true);
         try {
             const token = localStorage.getItem('authToken');
             const response = await fetch(`${API_BASE_URL}/admin/faqs/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)
             });
             const data = await response.json();
@@ -87,14 +72,10 @@ export function EditFAQ() {
 
     const handleDelete = async () => {
         if (!confirm('Are you sure you want to delete this FAQ?')) return;
-
         setDeleting(true);
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${API_BASE_URL}/admin/faqs/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetch(`${API_BASE_URL}/admin/faqs/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             const data = await response.json();
             if (response.ok) {
                 toast.success('FAQ deleted successfully!');
@@ -109,116 +90,26 @@ export function EditFAQ() {
         }
     };
 
-    if (loading) {
-        return (
-            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted, #666)' }}>
-                Loading...
-            </div>
-        );
-    }
+    if (loading) return <div className="py-16 text-center text-slate-500">Loading…</div>;
 
     return (
-        <div style={{ padding: '24px' }}>
-            {/* Breadcrumb */}
-            <div style={{ marginBottom: '8px', fontSize: '14px', color: 'var(--text-muted, #888)' }}>
-                <Link to="/admin/more/faqs" style={{ color: 'var(--text-muted, #888)', textDecoration: 'none' }}>Faqs</Link>
-                {' > '} Edit
+        <div className="max-w-3xl">
+            <div className="mb-2 text-sm text-slate-500">
+                <Link to="/admin/more/faqs" className="text-slate-500 hover:text-violet-700">FAQs</Link> / Edit
             </div>
-
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary, #fff)', margin: 0 }}>
-                    Edit Faq
-                </h1>
-                <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    style={{
-                        padding: '10px 20px', backgroundColor: '#ef4444',
-                        color: '#fff', border: 'none', borderRadius: '6px',
-                        fontWeight: '600', cursor: 'pointer', fontSize: '14px'
-                    }}
-                >
-                    {deleting ? 'Deleting...' : 'Delete'}
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold text-slate-900">Edit FAQ</h1>
+                <button onClick={handleDelete} disabled={deleting}
+                    className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-red-200 bg-red-50 text-sm font-semibold text-red-600 hover:text-red-700 hover:bg-red-100 disabled:opacity-50 transition-colors">
+                    <Trash2 className="h-4 w-4" />{deleting ? 'Deleting…' : 'Delete'}
                 </button>
             </div>
 
-            {/* Form Card */}
-            <div style={{
-                backgroundColor: 'var(--card-background, #1a1a2e)',
-                border: '1px solid var(--border, #2a2a4a)',
-                borderRadius: '12px', padding: '24px'
-            }}>
-                <h3 style={{ margin: '0 0 24px 0', color: 'var(--text-primary, #fff)', fontSize: '16px', fontWeight: '500' }}>
-                    Edit Faq
-                </h3>
-
-                {/* Form Fields */}
-                <div style={{ marginBottom: '20px' }}>
-                    <RichTextEditor
-                        label="Question"
-                        value={form.question}
-                        onChange={(value) => setForm({ ...form, question: value })}
-                        placeholder="Enter the FAQ question..."
-                        required={true}
-                    />
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                    <RichTextEditor
-                        label="Answer"
-                        value={form.answer}
-                        onChange={(value) => setForm({ ...form, answer: value })}
-                        placeholder="Enter the FAQ answer..."
-                        required={true}
-                    />
-                </div>
-
-                {/* Active Toggle */}
-                <div style={{ marginBottom: '32px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                        <div style={{
-                            width: '44px', height: '24px', borderRadius: '12px',
-                            backgroundColor: form.is_active ? '#f59e0b' : '#444',
-                            position: 'relative', transition: 'background-color 0.2s'
-                        }}>
-                            <div style={{
-                                width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#fff',
-                                position: 'absolute', top: '2px',
-                                left: form.is_active ? '22px' : '2px',
-                                transition: 'left 0.2s'
-                            }} />
-                        </div>
-                        <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} style={{ display: 'none' }} />
-                        <span style={{ color: 'var(--text-primary, #fff)', fontSize: '14px' }}>
-                            Active<span style={{ color: '#ef4444' }}>*</span>
-                        </span>
-                    </label>
-                </div>
-
-                {/* Buttons */}
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={saving}
-                        style={{
-                            padding: '10px 20px', backgroundColor: '#3b82f6',
-                            color: '#fff', border: 'none', borderRadius: '6px',
-                            fontWeight: '500', cursor: 'pointer', fontSize: '14px'
-                        }}
-                    >
-                        {saving ? 'Saving...' : 'Save changes'}
-                    </button>
-                    <Link
-                        to="/admin/more/faqs"
-                        style={{
-                            padding: '10px 20px', backgroundColor: 'var(--background, #0f0f1a)',
-                            color: 'var(--text-primary, #fff)', border: '1px solid var(--border, #2a2a4a)',
-                            borderRadius: '6px', fontWeight: '500', textDecoration: 'none', fontSize: '14px'
-                        }}
-                    >
-                        Cancel
-                    </Link>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <FaqFields form={form} setForm={setForm} />
+                <div className="flex flex-wrap gap-3 mt-8 pt-6 border-t border-slate-100">
+                    <button onClick={handleSubmit} disabled={saving} className={btnPrimary}>{saving ? 'Saving…' : 'Save changes'}</button>
+                    <Link to="/admin/more/faqs" className={btnGhost}>Cancel</Link>
                 </div>
             </div>
         </div>

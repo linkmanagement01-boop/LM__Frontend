@@ -2,6 +2,8 @@
 // Dashboard "Check traffic" (one site or a batch) → one Ahrefs tab checks the sites one after another →
 // each result is saved to our backend and sent to the dashboard → the tab closes when the batch is done.
 // A single check is a batch of one.
+// The Ahrefs tab opens in the background; it only comes to the front when Ahrefs wants the person to
+// verify they are human (ahrefs.js sends "needsHuman"), and the dashboard is shown again after the next save.
 
 // Only these backends ever receive the login token
 const ALLOWED_API = ['http://localhost:5001', 'https://www.api.linkmanagement.net', 'https://api.linkmanagement.net', 'https://api-linkmanagement.femur.studio'];
@@ -45,11 +47,10 @@ const finish = async (b, status, message) => {
   b.items.filter(i => i.status === 'not_run').forEach(i => toDashboard(b, { type: 'result', site_id: i.site_id, ok: false, cancelled: true, message: b.message }));
   await clearBatch();
   setTimeout(async () => {
+    // back to the dashboard only if the person is looking at the Ahrefs tab (it came forward for the human check)
+    const ahrefsActive = b.tabId ? await chrome.tabs.get(b.tabId).then(t => t.active, () => false) : false;
     if (b.tabId) chrome.tabs.remove(b.tabId).catch(() => {});
-    if (b.dashTabId) {
-      const t = await chrome.tabs.update(b.dashTabId, { active: true }).catch(() => null);
-      if (t) chrome.windows.update(t.windowId, { focused: true }).catch(() => {});
-    }
+    if (b.surfaced || ahrefsActive) focusTab(b.dashTabId);
   }, 1500);
 };
 
@@ -89,7 +90,7 @@ const startBatch = async (msg, sender) => {
   }
 
   items[0].status = 'checking';
-  const tab = await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: true });
+  const tab = await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
   const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
   await setBatch(b);
   sendProgress(b);
@@ -120,6 +121,8 @@ const saveCapture = async (msg, sender) => {
     item.status = 'saved';
     toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: data.traffic, message: data.message });
     const more = b.index + 1 < b.items.length;
+    // the person was sent to Ahrefs for the human check → back to the dashboard, the rest runs in the background
+    if (b.surfaced && more) { b.surfaced = false; focusTab(b.dashTabId); }
     await next(b);
     return { ok: true, message: `${data.message || 'Traffic saved'} ✓${more ? ' – next site…' : ' – closing this tab…'}` };
   } catch (e) {
@@ -155,6 +158,23 @@ const ahrefsError = async (msg, sender) => {
   return { ok: true };
 };
 
+const focusTab = async (tabId) => {
+  if (!tabId) return;
+  const t = await chrome.tabs.update(tabId, { active: true }).catch(() => null);
+  if (t) chrome.windows.update(t.windowId, { focused: true }).catch(() => {});
+};
+
+/** Ahrefs is showing "verify you are human" → bring its tab to the front */
+const needsHuman = async (msg, sender) => {
+  const b = await getBatch();
+  if (!b || b.status !== 'running' || sender.tab?.id !== b.tabId) return { ok: false };
+  b.surfaced = true;
+  await setBatch(b);
+  await focusTab(b.tabId);
+  toDashboard(b, { ...progressOf(b), message: 'Ahrefs wants you to verify you are human – switched to the Ahrefs tab' });
+  return { ok: true };
+};
+
 const stopBatch = async () => {
   const b = await getBatch();
   if (b?.status === 'running') await finish(b, 'stopped', 'Stopped');
@@ -170,6 +190,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     : msg.type === 'captured' ? saveCapture(msg, sender)
     : msg.type === 'skip' ? skipCurrent(msg, sender)
     : msg.type === 'ahrefsError' ? ahrefsError(msg, sender)
+    : msg.type === 'needsHuman' ? needsHuman(msg, sender)
     : null;
   if (!run) return false;
   run.then(reply, (e) => reply({ ok: false, message: e.message }));
