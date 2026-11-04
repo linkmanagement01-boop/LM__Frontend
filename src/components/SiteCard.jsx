@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { ExternalLink, ShieldAlert, FileText, Ban, Eye, Mail, Copy, Check, Tag } from 'lucide-react';
 import { AhrefsVolume, TrafficCheckButton, HoverPopover } from './SiteTraffic';
+import { FC_CATEGORIES } from './SiteFilters';
 
 /**
  * One site on the Sites pages: header (domain, tags, prices, actions), four stat columns, footer.
  * role 'admin' adds Edit Site, Edit metrics and the footer actions; 'manager' views only.
  * onOpen: the eye button (admin: approve / reject / delete, manager: site details).
+ * fcCategory: with FC on, the forbidden category the card shows (its niches are all of them).
  */
-export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSelect, onTrafficSaved, fc, style }) {
+export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSelect, onTrafficSaved, fc, fcCategory, style }) {
     const isAdmin = role === 'admin';
     const [editingMetrics, setEditingMetrics] = useState(false);
     const [metrics, setMetrics] = useState({
@@ -80,7 +82,7 @@ export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSel
                         </a>
                         {isSiteNew(site.created_at) && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand text-white uppercase tracking-wider">New</span>}
                         {/* category – the category + website niche show in a hover card, like the email */}
-                        <CategoryPopover domain={site.root_domain} category={site.category || site.niche || 'General'} niche={site.website_niche} />
+                        <CategoryPopover domain={site.root_domain} category={fcCategory || site.category || site.niche || 'General'} niche={fcCategory ? FC_CATEGORIES.join(', ') : site.website_niche} />
                         <span className={`px-2 py-1 rounded-md border text-[10px] font-bold uppercase ${statusCls}`}>{site.website_status || statusLabel}</span>
                         {site.email && (
                             /* icon only – the address shows in a hover card, like the Ahrefs popups */
