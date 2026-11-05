@@ -85,7 +85,7 @@ export function CompletedOrderDetail() {
 
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
                     <CheckCircle className="h-8 w-8 text-green-400" />
                     Order Detail
                     <span className="text-2xl text-[var(--text-muted)] font-mono font-normal">#{order.order_id || order.id}</span>

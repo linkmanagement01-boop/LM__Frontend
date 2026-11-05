@@ -57,7 +57,7 @@ export function OrderNotifications() {
       {/* Header */}
       <div className="flex bg-[var(--card-background)] p-6 rounded-2xl border border-[var(--border)] items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
             <Bell className="h-8 w-8 text-[var(--primary-cyan)]" />
             Order Notifications
           </h1>
@@ -103,7 +103,7 @@ export function OrderNotifications() {
       {/* Table */}
       {!loading && (
         <div className="premium-table-container">
-          <table className="premium-table">
+          <table className="premium-table table-compact">
             <thead>
               <tr>
                 <th className="w-[100px]">Order ID</th>
@@ -145,7 +145,7 @@ export function OrderNotifications() {
                       {r.order_type || 'Guest Post'}
                     </td>
                     <td>
-                      <span className="premium-badge bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border-[var(--primary-cyan)]/20">
+                      <span className="premium-badge whitespace-nowrap bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border-[var(--primary-cyan)]/20">
                         {r.category || 'General'}
                       </span>
                     </td>
@@ -168,7 +168,10 @@ export function OrderNotifications() {
                         {r.no_of_links || 1}
                       </span>
                     </td>
-                    <td className="text-[var(--text-secondary)]">{r.order_package || 'Standard'}</td>
+                    <td className="max-w-[220px]">
+                      {/* package text can be long – two lines, full text on hover */}
+                      <div className="line-clamp-2 text-xs text-[var(--text-secondary)]" title={r.order_package || ''}>{r.order_package || 'Standard'}</div>
+                    </td>
                     <td className="text-center">
                       <button
                         onClick={() => handlePush(r.id)}

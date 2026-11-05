@@ -313,7 +313,7 @@ export const PushToManager = () => {
                     <ArrowLeft className="h-5 w-5 text-[var(--text-secondary)]" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Push to Manager</h1>
+                    <h1 className="text-2xl font-bold text-[var(--text-main)]">Push to Manager</h1>
                     <p className="text-[var(--text-muted)]">Order {task.manual_order_id || `#${task.id}`} • Select <span className="text-[var(--primary-cyan)] font-bold">{requiredLinks}</span> website(s)</p>
                 </div>
             </div>

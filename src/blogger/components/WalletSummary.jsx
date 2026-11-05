@@ -29,8 +29,8 @@ export function WalletSummary({ wallet, loading }) {
             label: 'Current Balance',
             value: `$${parseFloat(wallet?.balance || 0).toFixed(2)}`,
             icon: WalletIcon,
-            color: '#6BF0FF',
-            bgColor: 'rgba(107, 240, 255, 0.1)',
+            color: '#7C3AED',
+            bgColor: 'rgba(124, 58, 237, 0.1)',
         },
         {
             label: 'Available Balance',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RefreshCw, FileText } from 'lucide-react';
 import { Pagination } from '../../components/Pagination.jsx';
 import { RejectModal } from '../../components/RejectModal.jsx';
@@ -34,7 +34,9 @@ export function Orders() {
   const [error, setError] = useState(null);
 
   // State for filtering
-  const [status, setStatus] = useState('all');
+  // ?status=pending|waiting|rejected|completed opens that tab (dashboard cards link here)
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState(() => (['pending', 'waiting', 'rejected', 'completed'].includes(searchParams.get('status')) ? searchParams.get('status') : 'all'));
   const [filters, setFilters] = useState({ date: '', orderId: '', domain: '' });
 
   // State for pagination
@@ -230,8 +232,8 @@ export function Orders() {
             onClick={fetchTasks}
             className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
             style={{
-              background: 'linear-gradient(135deg, #6BF0FF 0%, #3ED9EB 100%)',
-              color: 'var(--background-dark)'
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+              color: '#FFFFFF'
             }}
           >
             <RefreshCw className="h-4 w-4" />

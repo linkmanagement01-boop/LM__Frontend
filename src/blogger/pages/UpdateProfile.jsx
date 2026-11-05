@@ -404,6 +404,7 @@ export function UpdateProfile() {
                                         <img
                                             src={imagePreview}
                                             alt="Profile Preview"
+                                            onError={() => setImagePreview(null)} // saved file missing → no broken picture
                                             className="w-24 h-24 rounded-full object-cover border-4 border-[var(--background-dark)] shadow-lg"
                                         />
                                         <button

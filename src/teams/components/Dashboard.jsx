@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RefreshCw, CheckCircle, Bell, XCircle, MessageSquare, X, Eye, ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { RefreshCw, CheckCircle, Bell, XCircle, MessageSquare, ArrowRight, Database, Sparkles, ChevronRight } from 'lucide-react';
 import { teamAPI } from '../../lib/api';
+import { useAuth } from '../../auth/AuthContext';
+
+const fmt = (n) => Number(n || 0).toLocaleString();
 
 export function Dashboard() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState({
-    completed_orders: 0,
-    order_added_notifications: 0,
-    rejected_notifications: 0,
-    threads: 0
-  });
+  const [stats, setStats] = useState(null);
   const [ordersAddedToday, setOrdersAddedToday] = useState([]);
   const [rejectedOrders, setRejectedOrders] = useState([]);
 
@@ -44,215 +42,162 @@ export function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  const s = stats || {};
+  // each card opens its list
   const cards = [
-    {
-      label: 'Completed Orders',
-      value: stats.completed_orders,
-      icon: CheckCircle,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20',
-      link: '/teams/completed-orders'
-    },
-    {
-      label: 'Order Added Notifications',
-      value: stats.order_added_notifications,
-      icon: Bell,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/20',
-      link: '/teams/order-notifications'
-    },
-    {
-      label: 'Rejected Links',
-      value: stats.rejected_notifications,
-      icon: XCircle,
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10',
-      borderColor: 'border-red-500/20',
-      link: '/teams/rejected-links'
-    },
-    {
-      label: 'Threads',
-      value: stats.threads,
-      icon: MessageSquare,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/20',
-      link: '/teams/threads'
-    },
+    { icon: Bell, label: 'New orders', hint: 'Waiting for you to pick sites', value: s.order_added_notifications, tone: 'violet', to: '/teams/order-notifications' },
+    { icon: CheckCircle, label: 'Completed orders', hint: 'Orders you have processed', value: s.completed_orders, tone: 'emerald', to: '/teams/completed-orders' },
+    { icon: XCircle, label: 'Rejected links', hint: 'Sent back – pick a new site', value: s.rejected_notifications, tone: 'red', to: '/teams/rejected-links' },
+    { icon: MessageSquare, label: 'Threads', hint: 'Conversations with managers', value: s.threads, tone: 'sky', to: '/teams/threads' }
   ];
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const todo = (s.order_added_notifications || 0) + (s.rejected_notifications || 0);
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Dashboard</h1>
-          <p className="text-[var(--text-muted)] mt-1">Welcome back, Team Member</p>
+    <div className="space-y-6 max-w-[1400px]">
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden rounded-3xl p-6 md:p-8 text-white shadow-lg shadow-violet-500/20"
+        style={{ background: 'linear-gradient(120deg, #4C1D95 0%, #6D28D9 45%, #8B5CF6 80%, #A855F7 100%)' }}>
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute right-40 -bottom-24 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-2xl" />
+        <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-violet-200">{today}</p>
+            <h1 className="mt-1 text-2xl md:text-3xl font-bold text-white">{greeting}, {user?.name?.split(' ')[0] || 'Team'}</h1>
+            <p className="mt-2 max-w-xl text-sm md:text-base text-violet-100">
+              {stats
+                ? (todo ? <><b className="text-white">{fmt(todo)}</b> orders need sites from you.</> : 'No orders waiting for sites – all caught up.')
+                : 'Loading today\'s numbers…'}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <HeroLink to="/teams/order-notifications" icon={Bell} label="New orders" primary />
+              <HeroLink to="/teams/new-sites" icon={Database} label="Sites" />
+              <button onClick={fetchDashboardData} disabled={loading}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-white/15 text-white hover:text-white hover:bg-white/25 ring-1 ring-white/25 transition-all disabled:opacity-60">
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:w-[400px] shrink-0">
+            <HeroStat label="Added today" value={stats ? fmt(ordersAddedToday.length) : '…'} hint="new orders" />
+            <HeroStat label="Rejected links" value={stats ? fmt(s.rejected_notifications) : '…'} hint="to replace" />
+          </div>
         </div>
-        <button
-          onClick={fetchDashboardData}
-          disabled={loading}
-          className="premium-btn bg-[var(--card-background)] border border-[var(--border)] hover:border-[var(--primary-cyan)] text-[var(--text-primary)]"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
-      </div>
+      </section>
 
-      {/* Error State */}
       {error && (
-        <div className="premium-card p-4 border-red-500/20 bg-red-500/10 text-red-400 flex items-center gap-2">
-          <XCircle className="h-5 w-5" />
-          <p>Error loading dashboard: {error}</p>
+        <div className="rounded-2xl px-5 py-4 border border-red-200 bg-red-50 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-red-600">Error loading dashboard: {error}</p>
+          <button onClick={fetchDashboardData} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-red-600 text-sm font-semibold text-white hover:text-white hover:bg-red-700">
+            <RefreshCw className="h-4 w-4" /> Retry
+          </button>
         </div>
       )}
 
-      {/* Loading State */}
-      {loading && !error && (
-        <div className="flex justify-center py-20">
-          <div className="flex flex-col items-center">
-            <div className="h-10 w-10 border-2 border-[var(--primary-cyan)] border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-[var(--text-muted)] animate-pulse">Loading dashboard...</p>
+      {/* ── Numbers ── */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {cards.map(c => <StatCard key={c.label} {...c} loading={loading && !stats} />)}
+      </section>
+
+      {/* ── Lists ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OrderList
+          title="Today's new orders" icon={Bell} tone="violet" to="/teams/order-notifications" linkLabel="All new orders"
+          orders={ordersAddedToday} loading={loading && !stats} empty="No new orders added today"
+        />
+        <OrderList
+          title="Rejected links" icon={XCircle} tone="red" to="/teams/rejected-links" linkLabel="All rejected links"
+          orders={rejectedOrders} loading={loading && !stats} empty="No rejected links pending" rejected
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Pieces ─────────────────────────────────────────────────────────
+
+function HeroLink({ to, icon: Icon, label, primary }) {
+  return (
+    <Link to={to} className={`inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 ${primary
+      ? 'bg-white text-violet-700 hover:text-violet-800 shadow-md shadow-violet-900/20'
+      : 'bg-white/15 text-white hover:text-white hover:bg-white/25 ring-1 ring-white/25'}`}>
+      <Icon className="h-4 w-4" />{label}
+    </Link>
+  );
+}
+
+function HeroStat({ label, value, hint }) {
+  return (
+    <div className="rounded-2xl ring-1 ring-white/20 backdrop-blur-sm px-4 py-3.5" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
+      <div className="text-[11px] font-semibold uppercase tracking-wide sm:whitespace-nowrap text-violet-200">{label}</div>
+      <div className="mt-1 text-2xl font-bold text-white tabular-nums">{value}</div>
+      <div className="text-xs text-violet-200 mt-0.5">{hint}</div>
+    </div>
+  );
+}
+
+const TONES = {
+  violet: 'bg-violet-50 text-violet-600',
+  sky: 'bg-sky-50 text-sky-600',
+  emerald: 'bg-emerald-50 text-emerald-600',
+  red: 'bg-red-50 text-red-600'
+};
+
+function StatCard({ icon: Icon, label, hint, value, tone, to, loading }) {
+  return (
+    <Link to={to} className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-violet-200">
+      <div className="flex items-start justify-between">
+        <span className={`h-11 w-11 rounded-xl flex items-center justify-center ${TONES[tone]}`}><Icon className="h-5 w-5" /></span>
+        <ArrowRight className="h-4 w-4 text-slate-300 transition-all group-hover:text-violet-500 group-hover:translate-x-0.5" />
+      </div>
+      <div className="mt-4 text-sm font-medium text-slate-500">{label}</div>
+      <div className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{loading ? '…' : fmt(value)}</div>
+      <div className="mt-1 text-xs text-slate-500">{hint}</div>
+    </Link>
+  );
+}
+
+function OrderList({ title, icon: Icon, tone, to, linkLabel, orders, loading, empty, rejected }) {
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden flex flex-col">
+      <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className={`h-9 w-9 shrink-0 rounded-xl flex items-center justify-center ${TONES[tone]}`}><Icon className="h-4 w-4" /></span>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold text-slate-900">{title}</h2>
+            <p className="text-xs text-slate-500">{loading ? 'Loading…' : `${fmt(orders.length)} ${orders.length === 1 ? 'order' : 'orders'}`}</p>
           </div>
         </div>
-      )}
-
-      {/* Dashboard Content */}
-      {!loading && !error && (
-        <>
-          {/* Stat Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {cards.map((c) => {
-              const Icon = c.icon;
-              return (
-                <div
-                  key={c.label}
-                  onClick={() => navigate(c.link)}
-                  className={`premium-card p-6 cursor-pointer hover:scale-[1.02] active:scale-[0.98] group relative`}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-xl ${c.bgColor} ${c.color} border ${c.borderColor}`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <ArrowUpRight className="h-5 w-5 text-[var(--text-muted)] group-hover:text-[var(--primary-cyan)] transition-colors" />
-                  </div>
-                  <div className="text-3xl font-bold text-[var(--text-primary)] mb-1">
-                    {c.value}
-                  </div>
-                  <div className="text-sm text-[var(--text-muted)] font-medium">
-                    {c.label}
-                  </div>
-                </div>
-              );
-            })}
+        <Link to={to} className="inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-800 shrink-0">
+          {linkLabel} <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar divide-y divide-slate-100">
+        {loading ? (
+          [1, 2, 3].map(i => <div key={i} className="px-6 py-4"><div className="h-9 rounded-lg bg-slate-50 animate-pulse" /></div>)
+        ) : orders.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <Sparkles className="h-6 w-6 mx-auto text-violet-400" />
+            <p className="mt-2 text-sm text-slate-500">{empty}</p>
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Today Order Added Notification Section */}
-            <div className="premium-card flex flex-col h-full">
-              <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-white/[0.02]">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-blue-400" />
-                  Today's New Orders
-                </h3>
-                <span className="premium-badge bg-blue-500/10 text-blue-400 border-blue-500/20">
-                  {ordersAddedToday.length}
-                </span>
+        ) : orders.map(order => (
+          <Link key={order.id} to={to} className="group flex items-center justify-between gap-3 px-6 py-3.5 hover:bg-violet-50/40 transition-colors">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 group-hover:text-slate-900">
+                <span className="truncate">{order.manual_order_id || `Order #${order.id}`}</span>
+                {rejected && <span className="shrink-0 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-bold uppercase">Rejected</span>}
               </div>
-
-              <div className="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
-                {ordersAddedToday.length > 0 ? (
-                  <div className="divide-y divide-[var(--border)]">
-                    {ordersAddedToday.map(order => (
-                      <div
-                        key={order.id}
-                        className="p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors group"
-                      >
-                        <div>
-                          <div className="font-medium text-[var(--primary-cyan)]">
-                            {order.manual_order_id || `Order #${order.id}`}
-                          </div>
-                          <div className="text-sm mt-1 text-[var(--text-secondary)]">
-                            {order.client_name} • <span className="text-[var(--text-muted)] text-xs uppercase tracking-wide">{order.order_type}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => navigate(`/teams/order-notifications`)}
-                          className="premium-btn p-2 h-auto text-[var(--text-muted)] hover:text-[var(--primary-cyan)] bg-transparent shadow-none border border-transparent hover:border-[var(--primary-cyan)]/20 hover:bg-[var(--primary-cyan)]/5"
-                          title="View Order"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-16 text-center flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-[var(--background-dark)] flex items-center justify-center mb-4 border border-[var(--border)]">
-                      <Bell className="h-8 w-8 text-[var(--text-muted)] opacity-50" />
-                    </div>
-                    <p className="text-[var(--text-muted)]">No new orders added today</p>
-                  </div>
-                )}
+              <div className="mt-0.5 text-xs text-slate-500 truncate">
+                {order.client_name || '-'}{order.order_type ? ` · ${order.order_type}` : ''}
               </div>
             </div>
-
-            {/* Rejected Links Section */}
-            <div className="premium-card flex flex-col h-full">
-              <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-white/[0.02]">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <XCircle className="h-4 w-4 text-red-400" />
-                  Rejected Links
-                </h3>
-                <span className="premium-badge bg-red-500/10 text-red-400 border-red-500/20">
-                  {rejectedOrders.length}
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
-                {rejectedOrders.length > 0 ? (
-                  <div className="divide-y divide-[var(--border)]">
-                    {rejectedOrders.map(order => (
-                      <div
-                        key={order.id}
-                        className="p-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors group"
-                      >
-                        <div>
-                          <div className="font-medium flex items-center gap-2 text-[var(--text-primary)]">
-                            {order.manual_order_id || `Order #${order.id}`}
-                            <span className="premium-badge bg-red-500/10 text-red-400 border-red-500/20 text-[10px] py-0.5 px-1.5 h-auto">
-                              Rejected
-                            </span>
-                          </div>
-                          <div className="text-sm mt-1 text-[var(--text-secondary)]">
-                            {order.client_name} • <span className="text-[var(--text-muted)] text-xs uppercase tracking-wide">{order.order_type}</span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => navigate(`/teams/rejected-links`)}
-                          className="premium-btn p-2 h-auto text-[var(--text-muted)] hover:text-red-400 bg-transparent shadow-none border border-transparent hover:border-red-400/20 hover:bg-red-500/5 api-transition"
-                          title="View Details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-16 text-center flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-[var(--background-dark)] flex items-center justify-center mb-4 border border-[var(--border)]">
-                      <CheckCircle className="h-8 w-8 text-green-500/50" />
-                    </div>
-                    <p className="text-[var(--text-muted)]">No rejected links pending</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-violet-500" />
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

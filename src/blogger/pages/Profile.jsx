@@ -13,6 +13,7 @@ import { useToast } from '../../context/ToastContext';
  * - Links to Edit Profile and Change Password
  */
 export function Profile() {
+    const [imgFailed, setImgFailed] = useState(false);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const { showError } = useToast();
@@ -73,17 +74,18 @@ export function Profile() {
                 <div className="flex flex-col md:flex-row items-center gap-6">
                     {/* Profile Image */}
                     <div className="relative">
-                        {profile?.profile_image ? (
+                        {profile?.profile_image && !imgFailed ? (
                             <img
                                 src={getImageUrl(profile.profile_image)}
                                 alt={profile.name}
+                                onError={() => setImgFailed(true)} // saved file missing → show the placeholder
                                 className="w-24 h-24 rounded-full object-cover"
                                 style={{ border: '3px solid var(--primary-cyan)' }}
                             />
                         ) : (
                             <div
                                 className="w-24 h-24 rounded-full flex items-center justify-center"
-                                style={{ backgroundColor: 'var(--primary-cyan)', color: 'var(--background-dark)' }}
+                                style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '3px solid var(--primary-cyan)' }}
                             >
                                 <User className="h-12 w-12" />
                             </div>

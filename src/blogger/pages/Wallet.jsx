@@ -121,7 +121,7 @@ export function Wallet() {
 
           <Link
             to="/blogger/request-withdrawal"
-            className="premium-btn premium-btn-accent shadow-lg shadow-orange-500/20"
+            className="premium-btn premium-btn-accent shadow-lg shadow-violet-500/20"
           >
             <ArrowDownToLine className="h-4 w-4" />
             Request Withdrawal

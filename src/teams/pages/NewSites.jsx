@@ -1,9 +1,12 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Globe, Eye, X, ExternalLink, Search, Filter, Database, Check, Download } from 'lucide-react';
+import { RefreshCw, Globe, Eye, X, ExternalLink, Search, Filter, Database, Check, Download, ChevronDown } from 'lucide-react';
 import { teamAPI } from '../../lib/api';
 import { Pagination } from '../../components/Pagination';
 import ExportModal from '../../components/ExportModal';
 import { exportToCSV, exportToExcel } from '../../utils/exportUtils';
+
+// prices can be blank or "N/A" – only numbers get a $
+const price = (v) => (v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) ? `$${v}` : '-');
 
 export function NewSites() {
   const [websites, setWebsites] = useState([]);
@@ -101,7 +104,7 @@ export function NewSites() {
       {/* Header */}
       <div className="flex bg-[var(--card-background)] p-6 rounded-2xl border border-[var(--border)] items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
             <Database className="h-8 w-8 text-[var(--primary-cyan)]" />
             View All Sites
           </h1>
@@ -154,13 +157,13 @@ export function NewSites() {
             <select
               value={filters.status}
               onChange={(e) => { setFilters({ ...filters, status: e.target.value }); }}
-              className="premium-input pl-10 appearance-none cursor-pointer"
+              className="premium-input w-full pl-10 pr-9 appearance-none cursor-pointer"
             >
               <option value="">All Status</option>
               <option value="1">Active</option>
               <option value="2">Inactive</option>
             </select>
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]">▼</div>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-[var(--text-muted)]" />
             <Check className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
           </div>
 
@@ -195,7 +198,7 @@ export function NewSites() {
 
       {/* Table */}
       <div className="premium-table-container">
-        <table className="premium-table">
+        <table className="premium-table table-compact">
           <thead>
             <tr>
               <th className="w-12 text-center p-4">
@@ -206,13 +209,11 @@ export function NewSites() {
                     onChange={handleSelectAll}
                 />
               </th>
-              <th className="w-[250px]">Root Domain</th>
-              <th className="text-center">Added on</th>
+              <th>Root Domain</th>
               <th className="text-center">DR</th>
               <th className="text-center">DA</th>
               <th className="text-center">Traffic</th>
-              <th className="text-center">GP Price</th>
-              <th className="text-center">Niche Price</th>
+              <th className="text-center">Prices</th>
               <th className="text-center">Status</th>
               <th>Email</th>
               <th className="text-right">Action</th>
@@ -221,7 +222,7 @@ export function NewSites() {
           <tbody>
             {loading && websites.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-6 py-12 text-center text-[var(--text-muted)]">
+                <td colSpan={9} className="px-6 py-12 text-center text-[var(--text-muted)]">
                   <div className="flex flex-col items-center justify-center gap-3">
                     <RefreshCw className="h-6 w-6 animate-spin text-[var(--primary-cyan)]" />
                     <span>Loading websites...</span>
@@ -230,7 +231,7 @@ export function NewSites() {
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-6 py-12 text-center text-[var(--text-muted)]">
+                <td colSpan={9} className="px-6 py-12 text-center text-[var(--text-muted)]">
                   <div className="flex flex-col items-center justify-center gap-3">
                     <Database className="h-8 w-8 text-[var(--text-muted)] opacity-50" />
                     <span>No websites found matching your filters</span>
@@ -262,14 +263,12 @@ export function NewSites() {
                         <div className="font-medium text-[var(--text-primary)]">
                           {site.root_domain || site.domain_url}
                         </div>
+                        {/* category · date added */}
                         <div className="text-xs text-[var(--text-muted)]">
-                          {site.category || 'General'}
+                          {site.category || 'General'}{site.created_at ? ` · ${new Date(site.created_at).toLocaleDateString()}` : ''}
                         </div>
                       </div>
                     </div>
-                  </td>
-                  <td className="text-center text-[var(--text-secondary)] text-xs">
-                    {site.created_at ? new Date(site.created_at).toLocaleDateString() : '-'}
                   </td>
                   <td className="text-center">
                     <span className="premium-metric-pill bg-[var(--background-dark)] text-[var(--text-secondary)]">
@@ -284,11 +283,9 @@ export function NewSites() {
                   <td className="text-center text-[var(--text-primary)] font-mono text-xs">
                     {site.traffic || '-'}
                   </td>
-                  <td className="text-center font-mono text-[var(--text-primary)] text-xs">
-                    ${site.gp_price || '0'}
-                  </td>
-                  <td className="text-center font-mono text-[var(--text-primary)] text-xs">
-                    ${site.niche_edit_price || site.niche_price || '0'}
+                  <td className="text-center text-xs whitespace-nowrap">
+                    <div className="text-[var(--text-primary)]"><span className="text-[var(--text-muted)]">GP</span> {price(site.gp_price)}</div>
+                    <div className="text-[var(--text-primary)] mt-0.5"><span className="text-[var(--text-muted)]">NE</span> {price(site.niche_edit_price || site.niche_price)}</div>
                   </td>
                   <td className="text-center">
                     <span
@@ -299,7 +296,7 @@ export function NewSites() {
                       {site.website_status || (site.site_status === '1' || site.site_status === 1 ? 'Active' : 'Inactive')}
                     </span>
                   </td>
-                  <td className="text-[var(--text-secondary)] text-sm truncate max-w-[150px]">
+                  <td className="text-[var(--text-secondary)] text-sm truncate max-w-[170px]" title={site.email || ''}>
                     {site.email || '-'}
                   </td>
                   <td className="text-right">
@@ -408,8 +405,8 @@ export function NewSites() {
                   <MetricCard label="RD" value={selectedSite.rd} />
                   <MetricCard label="Traffic" value={selectedSite.traffic} />
                   <MetricCard label="Spam Score" value={selectedSite.spam_score} />
-                  <MetricCard label="GP Price" value={`$${selectedSite.gp_price || 0}`} highlighted />
-                  <MetricCard label="Niche Price" value={`$${selectedSite.niche_edit_price || selectedSite.niche_price || 0}`} highlighted />
+                  <MetricCard label="GP Price" value={price(selectedSite.gp_price)} highlighted />
+                  <MetricCard label="Niche Price" value={price(selectedSite.niche_edit_price || selectedSite.niche_price)} highlighted />
                   <div className="bg-[var(--background-dark)] p-4 rounded-xl border border-[var(--border)] flex flex-col items-center justify-center">
                     <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Status</div>
                     <span

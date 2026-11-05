@@ -97,7 +97,7 @@ export function CompletedOrders() {
                             placeholder="Search by Order ID, Manager, or Order Type..."
                             value={search}
                             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                            className="premium-input pl-10"
+                            className="premium-input w-full pl-10"
                         />
                     </div>
                     <div className="px-4 py-2 bg-[var(--background-dark)] rounded-lg text-sm text-[var(--text-secondary)] font-medium border border-[var(--border)]">
@@ -147,8 +147,8 @@ export function CompletedOrders() {
                                         <span
                                             className="premium-badge"
                                             style={{
-                                                backgroundColor: order.order_type === 'GP' ? 'rgba(249, 115, 22, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                                                color: order.order_type === 'GP' ? '#F97316' : '#22C55E'
+                                                backgroundColor: order.order_type === 'GP' ? 'rgba(124, 58, 237, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                                                color: order.order_type === 'GP' ? '#7C3AED' : '#16A34A'
                                             }}
                                         >
                                             {order.order_type || 'Guest Post'}

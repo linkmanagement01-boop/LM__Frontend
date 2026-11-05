@@ -53,7 +53,7 @@ export function RejectedLinks() {
       {/* Header */}
       <div className="flex bg-[var(--card-background)] p-6 rounded-2xl border border-[var(--border)] items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
             <XCircle className="h-8 w-8 text-red-500" />
             Rejected Links
           </h1>
@@ -99,7 +99,7 @@ export function RejectedLinks() {
       {/* Table */}
       {!loading && (
         <div className="premium-table-container">
-          <table className="premium-table">
+          <table className="premium-table table-compact">
             <thead>
               <tr>
                 <th className="w-[100px]">Order ID</th>
@@ -150,7 +150,7 @@ export function RejectedLinks() {
                         </button>
                         <button
                           onClick={() => navigate(`/teams/order-notifications/push/${r.id}`)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all hover:brightness-110 shadow-lg shadow-[var(--primary-cyan)]/20 text-black bg-gradient-to-r from-[var(--primary-cyan)] to-[var(--bright-cyan)]"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all shadow-sm text-white hover:text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]"
                         >
                           <Send className="h-3 w-3" />
                           Push to Manager

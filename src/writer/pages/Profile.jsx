@@ -246,6 +246,7 @@ export function Profile() {
                                     <img
                                         src={imagePreview}
                                         alt="Profile"
+                                        onError={() => setImagePreview(null)} // saved file missing → show the upload box
                                         className="w-24 h-24 rounded-lg object-cover border-2 border-[var(--border)]"
                                     />
                                     <button
@@ -288,7 +289,7 @@ export function Profile() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-6 py-2.5 bg-[#F97316] hover:bg-[#EA580C] text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                            className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white hover:text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-50"
                         >
                             {saving ? 'Saving...' : 'Submit'}
                         </button>

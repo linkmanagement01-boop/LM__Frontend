@@ -12,6 +12,12 @@ export function WriterLayout() {
   const base = '/writer';
   const [permissions, setPermissions] = useState(null);
 
+  // popups rendered into <body> (modals, hover cards) follow the violet theme too
+  useEffect(() => {
+    document.body.classList.add('theme-violet');
+    return () => document.body.classList.remove('theme-violet');
+  }, []);
+
   useEffect(() => {
     const fetchPermissions = async () => {
         try {
@@ -63,7 +69,8 @@ export function WriterLayout() {
   }, [allNavItems, permissions]);
 
   return (
-    <div className="h-screen overflow-hidden flex bg-transparent text-[var(--text-main)]">
+    // theme-violet: the new brand colours, as in the admin, manager and team panels
+    <div className="theme-violet h-screen overflow-hidden flex text-[var(--text-main)]">
       <ModernSidebar
         navItems={navItems}
         userName={user?.name || "Writer"}
@@ -72,11 +79,9 @@ export function WriterLayout() {
         onLogout={handleLogout}
         profileLink="/writer/profile"
         changePasswordLink="/writer/change-password"
+        logo="/brand/logo-mark.svg"
       />
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        {/* Mobile Header */}
-        <div className="absolute top-0 left-0 right-0 h-16 bg-[var(--background-dark)]/80 backdrop-blur-md z-10 border-b border-[var(--border)] lg:hidden" />
-
         <main className="flex-1 p-6 lg:p-8 overflow-y-auto custom-scrollbar relative z-0">
           <Outlet />
         </main>

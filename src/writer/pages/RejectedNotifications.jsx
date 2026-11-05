@@ -101,54 +101,41 @@ export function RejectedNotifications() {
 
       {/* Task Cards */}
       {!loading && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {paginatedTasks.map((task) => (
+            // one compact row per task: what / why on the left, the action on the right
             <div
               key={task.id}
-              className="premium-card p-6 border-l-4 border-l-[var(--error)]"
+              className="premium-card p-5 border-l-4 border-l-[var(--error)]"
             >
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[rgba(239,68,68,0.1)] flex items-center justify-center flex-shrink-0">
-                    <XCircle className="h-6 w-6 text-[var(--error)]" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="premium-badge" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
-                        TASK-{task.id}
-                      </span>
-                      <span className="text-sm text-[var(--text-secondary)]">
-                        {new Date(task.updated_at || task.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold text-[var(--text-primary)]">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="w-11 h-11 rounded-xl bg-[rgba(239,68,68,0.1)] flex items-center justify-center flex-shrink-0">
+                  <XCircle className="h-5 w-5 text-[var(--error)]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base font-bold text-[var(--text-primary)] truncate">
                       {task.website_domain || 'Task Rejected'}
                     </h3>
+                    <span className="premium-badge" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)', color: '#6D28D9' }}>
+                      TASK-{task.id}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)]">
+                      {new Date(task.updated_at || task.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-start gap-1.5 text-sm">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 text-[var(--error)] flex-shrink-0" />
+                    <p className="text-[var(--text-secondary)] leading-relaxed">
+                      <span className="font-semibold text-[var(--error)]">Reason: </span>
+                      {task.rejection_reason || 'No reason given'}
+                    </p>
                   </div>
                 </div>
-                <span className="premium-badge self-start"
-                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}>
-                  Rejected
-                </span>
-              </div>
-
-              {task.rejection_reason && (
-                <div className="p-4 rounded-xl bg-[rgba(239,68,68,0.05)] border border-[rgba(239,68,68,0.1)] mb-4">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 mt-0.5 text-[var(--error)] flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold mb-1 text-[var(--error)]">Rejection Reason</p>
-                      <p className="text-sm text-[var(--text-primary)] leading-relaxed">{task.rejection_reason}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Action button - navigate to task to revise and resubmit */}
-              <div className="flex justify-end">
+                {/* Action button - navigate to task to revise and resubmit */}
                 <button
                   onClick={() => navigate(`/writer/order-added-notifications/detail/${task.id}`)}
-                  className="premium-btn premium-btn-primary flex items-center gap-2"
+                  className="premium-btn premium-btn-primary flex items-center gap-2 shrink-0 self-start md:self-center"
                 >
                   <Edit className="h-4 w-4" />
                   Revise & Submit

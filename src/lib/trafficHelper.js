@@ -32,6 +32,25 @@ export const startTrafficBatch = (sites, role) => {
   }, window.location.origin);
 };
 
+// Traffic Lookup (domains that aren't our sites; results read, not saved) needs helper 1.3+
+export const LOOKUP_MAX = 300;
+export const helperSupportsLookup = () => {
+  const [major, minor] = (document.documentElement.getAttribute('data-lm-traffic-helper') || '0.0').split('.').map(Number);
+  return major > 1 || (major === 1 && minor >= 3);
+};
+
+/** Check a list of domains – items = [{ key, domain }]; each result comes back as LM_TRAFFIC_RESULT with site_id = key */
+export const startTrafficLookup = (items, role = 'admin') => {
+  window.postMessage({
+    type: 'LM_TRAFFIC_BATCH',
+    lookup: true,
+    sites: items.slice(0, LOOKUP_MAX).map(i => ({ site_id: i.key, domain: cleanDomain(i.domain) })),
+    api: API_BASE_URL,
+    token: localStorage.getItem('authToken'),
+    role,
+  }, window.location.origin);
+};
+
 export const stopTrafficBatch = () => window.postMessage({ type: 'LM_TRAFFIC_STOP' }, window.location.origin);
 
 /** Ask for the running batch's progress (answer comes as LM_TRAFFIC_PROGRESS) */
