@@ -14,7 +14,7 @@ export function StatusPills({ statuses, activeStatus, counts, onStatusChange }) 
             case 'rejected': return 'var(--error)';
             case 'pending': return 'var(--warning)';
             case 'waiting': return 'var(--primary-cyan)'; // Using primary-cyan for waiting/blue
-            default: return 'var(--text-secondary)';
+            default: return 'var(--color-primary)'; // "All" tab – brand colour
         }
     };
 

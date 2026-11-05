@@ -9,6 +9,12 @@ export const Layout = ({ children }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const [permissions, setPermissions] = useState(null);
+
+    // popups rendered into <body> (hover cards, modals) follow the violet theme too
+    useEffect(() => {
+        document.body.classList.add('theme-violet');
+        return () => document.body.classList.remove('theme-violet');
+    }, []);
     const { logout, user } = useAuth ? useAuth() : {
         logout: () => {
             sessionStorage.clear();
@@ -117,7 +123,8 @@ export const Layout = ({ children }) => {
     }, [allNavItems, permissions]);
 
     return (
-        <div className="h-screen overflow-hidden flex bg-transparent text-[var(--text-main)]">
+        // theme-violet: the new brand colours, as in the admin and manager panels
+        <div className="theme-violet h-screen overflow-hidden flex text-[var(--text-main)]">
             <ModernSidebar
                 navItems={navItems}
                 userName={user?.name || "Team Member"}
@@ -125,11 +132,10 @@ export const Layout = ({ children }) => {
                 userImage={getUserImage()}
                 onLogout={handleLogout}
                 profileLink="/teams/profile"
+                changePasswordLink="/teams/change-password"
+                logo="/brand/logo-mark.svg"
             />
             <div className="flex-1 flex flex-col min-w-0 h-full relative">
-                {/* Glass Header Effect */}
-                <div className="absolute top-0 left-0 right-0 h-16 bg-[var(--background-dark)]/80 backdrop-blur-md z-10 border-b border-[var(--border)] lg:hidden" />
-
                 <main className="flex-1 p-6 lg:p-8 overflow-y-auto custom-scrollbar relative z-0">
                     {children || <Outlet context={{ permissions }} />}
                 </main>

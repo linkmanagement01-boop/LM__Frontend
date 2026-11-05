@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RefreshCw, CheckCircle, Bell, XCircle, MessageSquare, X, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { RefreshCw, CheckCircle, Bell, XCircle, MessageSquare, ArrowRight, Sparkles, ChevronRight } from 'lucide-react';
 import { writerAPI } from '../../lib/api';
-import { PremiumStatsCard } from '../../components/PremiumStatsCard';
+import { useAuth } from '../../auth/AuthContext';
+
+const fmt = (n) => Number(n || 0).toLocaleString();
 
 export function Dashboard() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState({
-    completed_orders: 0,
-    order_added_notifications: 0,
-    rejected_notifications: 0,
-    threads: 0
-  });
+  const [stats, setStats] = useState(null);
   const [ordersAddedToday, setOrdersAddedToday] = useState([]);
   const [rejectedOrders, setRejectedOrders] = useState([]);
 
@@ -39,198 +36,163 @@ export function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  const s = stats || {};
+  // each card opens its list
   const cards = [
-    {
-      label: 'Completed Orders',
-      value: stats.completed_orders,
-      icon: CheckCircle,
-      color: 'var(--success)',
-      link: '/writer/completed-orders'
-    },
-    {
-      label: 'Order Notifications',
-      value: stats.order_added_notifications,
-      icon: Bell,
-      color: 'var(--primary-cyan)',
-      link: '/writer/notifications'
-    },
-    {
-      label: 'Rejected',
-      value: stats.rejected_notifications,
-      icon: XCircle,
-      color: 'var(--error)',
-      link: '/writer/rejected'
-    },
-    {
-      label: 'Threads',
-      value: stats.threads,
-      icon: MessageSquare,
-      color: '#8B5CF6',
-      link: '/writer/threads'
-    },
+    { icon: Bell, label: 'New orders', hint: 'Articles waiting to be written', value: s.order_added_notifications, tone: 'violet', to: '/writer/notifications' },
+    { icon: CheckCircle, label: 'Completed orders', hint: 'Articles you have delivered', value: s.completed_orders, tone: 'emerald', to: '/writer/completed-orders' },
+    { icon: XCircle, label: 'Rejected', hint: 'Sent back – revise and submit', value: s.rejected_notifications, tone: 'red', to: '/writer/rejected' },
+    { icon: MessageSquare, label: 'Threads', hint: 'Conversations with managers', value: s.threads, tone: 'sky', to: '/writer/threads' }
   ];
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <RefreshCw className="w-8 h-8 animate-spin text-[var(--primary-cyan)]" />
-        <p className="mt-4 text-[var(--text-muted)] font-medium">Loading dashboard...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="premium-card p-8 text-center max-w-lg mx-auto mt-12">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--error)]/10 flex items-center justify-center">
-          <XCircle className="w-8 h-8 text-[var(--error)]" />
-        </div>
-        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Failed to load dashboard</h3>
-        <p className="text-[var(--text-muted)] mb-6">{error}</p>
-        <button
-          onClick={fetchDashboardData}
-          className="premium-btn premium-btn-primary mx-auto"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Retry
-        </button>
-      </div>
-    );
-  }
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const todo = (s.order_added_notifications || 0) + (s.rejected_notifications || 0);
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-            Overview
-          </h1>
-          <p className="mt-1 text-[var(--text-secondary)]">
-            Welcome back, Writer. Here's what's happening today.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="premium-badge transition-colors" style={{ backgroundColor: 'var(--primary-glow)', color: 'var(--primary-cyan)' }}>
-            <div className="w-2 h-2 rounded-full bg-[var(--primary-cyan)] animate-pulse" />
-            Live Updates
+    <div className="space-y-6 max-w-[1400px]">
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden rounded-3xl p-6 md:p-8 text-white shadow-lg shadow-violet-500/20"
+        style={{ background: 'linear-gradient(120deg, #4C1D95 0%, #6D28D9 45%, #8B5CF6 80%, #A855F7 100%)' }}>
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute right-40 -bottom-24 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-2xl" />
+        <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-violet-200">{today}</p>
+            <h1 className="mt-1 text-2xl md:text-3xl font-bold text-white">{greeting}, {user?.name?.split(' ')[0] || 'Writer'}</h1>
+            <p className="mt-2 max-w-xl text-sm md:text-base text-violet-100">
+              {stats
+                ? (todo ? <><b className="text-white">{fmt(todo)}</b> articles are waiting for you.</> : 'No articles waiting – all caught up.')
+                : 'Loading today\'s numbers…'}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <HeroLink to="/writer/notifications" icon={Bell} label="New orders" primary />
+              <HeroLink to="/writer/rejected" icon={XCircle} label="Rejected" />
+              <button onClick={fetchDashboardData} disabled={loading}
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold bg-white/15 text-white hover:text-white hover:bg-white/25 ring-1 ring-white/25 transition-all disabled:opacity-60">
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Refresh
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:w-[400px] shrink-0">
+            <HeroStat label="Added today" value={stats ? fmt(ordersAddedToday.length) : '…'} hint="new orders" />
+            <HeroStat label="Rejected" value={stats ? fmt(s.rejected_notifications) : '…'} hint="to revise" />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {cards.map((c, index) => (
-          <PremiumStatsCard
-            key={index}
-            icon={c.icon}
-            label={c.label}
-            value={c.value}
-            color={c.color}
-            onClick={() => navigate(c.link)}
-          />
+      {error && (
+        <div className="rounded-2xl px-5 py-4 border border-red-200 bg-red-50 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-red-600">Error loading dashboard: {error}</p>
+          <button onClick={fetchDashboardData} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-red-600 text-sm font-semibold text-white hover:text-white hover:bg-red-700">
+            <RefreshCw className="h-4 w-4" /> Retry
+          </button>
+        </div>
+      )}
+
+      {/* ── Numbers ── */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {cards.map(c => <StatCard key={c.label} {...c} loading={loading && !stats} />)}
+      </section>
+
+      {/* ── Lists ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OrderList
+          title="Today's new orders" icon={Bell} tone="violet" to="/writer/notifications" linkLabel="All new orders"
+          linkFor={(o) => (o.task_id ? `/writer/order-added-notifications/detail/${o.task_id}` : '/writer/notifications')}
+          orders={ordersAddedToday} loading={loading && !stats} empty="No new orders added today"
+        />
+        <OrderList
+          title="Rejected orders" icon={XCircle} tone="red" to="/writer/rejected" linkLabel="All rejected"
+          linkFor={() => '/writer/rejected'}
+          orders={rejectedOrders} loading={loading && !stats} empty="No rejected orders" rejected
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Pieces ─────────────────────────────────────────────────────────
+
+function HeroLink({ to, icon: Icon, label, primary }) {
+  return (
+    <Link to={to} className={`inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5 ${primary
+      ? 'bg-white text-violet-700 hover:text-violet-800 shadow-md shadow-violet-900/20'
+      : 'bg-white/15 text-white hover:text-white hover:bg-white/25 ring-1 ring-white/25'}`}>
+      <Icon className="h-4 w-4" />{label}
+    </Link>
+  );
+}
+
+function HeroStat({ label, value, hint }) {
+  return (
+    <div className="rounded-2xl ring-1 ring-white/20 backdrop-blur-sm px-4 py-3.5" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
+      <div className="text-[11px] font-semibold uppercase tracking-wide sm:whitespace-nowrap text-violet-200">{label}</div>
+      <div className="mt-1 text-2xl font-bold text-white tabular-nums">{value}</div>
+      <div className="text-xs text-violet-200 mt-0.5">{hint}</div>
+    </div>
+  );
+}
+
+const TONES = {
+  violet: 'bg-violet-50 text-violet-600',
+  sky: 'bg-sky-50 text-sky-600',
+  emerald: 'bg-emerald-50 text-emerald-600',
+  red: 'bg-red-50 text-red-600'
+};
+
+function StatCard({ icon: Icon, label, hint, value, tone, to, loading }) {
+  return (
+    <Link to={to} className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-violet-200">
+      <div className="flex items-start justify-between">
+        <span className={`h-11 w-11 rounded-xl flex items-center justify-center ${TONES[tone]}`}><Icon className="h-5 w-5" /></span>
+        <ArrowRight className="h-4 w-4 text-slate-300 transition-all group-hover:text-violet-500 group-hover:translate-x-0.5" />
+      </div>
+      <div className="mt-4 text-sm font-medium text-slate-500">{label}</div>
+      <div className="mt-0.5 text-2xl font-bold text-slate-900 tabular-nums">{loading ? '…' : fmt(value)}</div>
+      <div className="mt-1 text-xs text-slate-500">{hint}</div>
+    </Link>
+  );
+}
+
+function OrderList({ title, icon: Icon, tone, to, linkLabel, linkFor, orders, loading, empty, rejected }) {
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden flex flex-col">
+      <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className={`h-9 w-9 shrink-0 rounded-xl flex items-center justify-center ${TONES[tone]}`}><Icon className="h-4 w-4" /></span>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold text-slate-900">{title}</h2>
+            <p className="text-xs text-slate-500">{loading ? 'Loading…' : `${fmt(orders.length)} ${orders.length === 1 ? 'order' : 'orders'}`}</p>
+          </div>
+        </div>
+        <Link to={to} className="inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-800 shrink-0">
+          {linkLabel} <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+      <div className="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar divide-y divide-slate-100">
+        {loading ? (
+          [1, 2, 3].map(i => <div key={i} className="px-6 py-4"><div className="h-9 rounded-lg bg-slate-50 animate-pulse" /></div>)
+        ) : orders.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <Sparkles className="h-6 w-6 mx-auto text-violet-400" />
+            <p className="mt-2 text-sm text-slate-500">{empty}</p>
+          </div>
+        ) : orders.map(order => (
+          <Link key={order.id} to={linkFor(order)} className="group flex items-center justify-between gap-3 px-6 py-3.5 hover:bg-violet-50/40 transition-colors">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 group-hover:text-slate-900">
+                <span className="truncate">{order.manual_order_id || `Order #${order.id}`}</span>
+                {rejected && <span className="shrink-0 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-bold uppercase">Rejected</span>}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500 truncate">
+                {order.client_name || '-'}{order.order_type ? ` · ${order.order_type}` : ''}
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-violet-500" />
+          </Link>
         ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Order Added Today Notification Section */}
-        <div className="premium-card flex flex-col h-full">
-          <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--primary-glow)]">
-                <Bell className="w-5 h-5 text-[var(--primary-cyan)]" />
-              </div>
-              <h3 className="font-bold text-[var(--text-primary)]">New Orders (Today)</h3>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto max-h-[400px] custom-scrollbar">
-            {ordersAddedToday.length > 0 ? (
-              <div className="divide-y divide-[var(--border)]">
-                {ordersAddedToday.map(order => (
-                  <div
-                    key={order.id}
-                    className="p-4 hover:bg-[var(--background-dark)] transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-medium text-[var(--text-primary)] group-hover:text-[var(--primary-cyan)] transition-colors">
-                        {order.manual_order_id || `Order #${order.id}`}
-                      </div>
-                      <div className="text-sm mt-1 text-[var(--text-muted)]">
-                        {order.client_name} • <span className="font-medium">{order.order_type}</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/writer/order-added-notifications/detail/${order.id}`)}
-                      className="p-2 rounded-lg hover:bg-[var(--primary-glow)] text-[var(--text-muted)] hover:text-[var(--primary-cyan)] transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-12 text-[var(--text-muted)]">
-                <div className="w-12 h-12 rounded-full bg-[var(--background-dark)] flex items-center justify-center mb-3">
-                  <Bell className="w-6 h-6 opacity-40" />
-                </div>
-                <p>No new orders today</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Rejected Notifications Section */}
-        <div className="premium-card flex flex-col h-full">
-          <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--error)]/10">
-                <XCircle className="w-5 h-5 text-[var(--error)]" />
-              </div>
-              <h3 className="font-bold text-[var(--text-primary)]">Rejected Orders</h3>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto max-h-[400px] custom-scrollbar">
-            {rejectedOrders.length > 0 ? (
-              <div className="divide-y divide-[var(--border)]">
-                {rejectedOrders.map(order => (
-                  <div
-                    key={order.id}
-                    className="p-4 hover:bg-[var(--background-dark)] transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <div className="font-medium text-[var(--text-primary)] flex items-center gap-2">
-                        {order.manual_order_id || `Order #${order.id}`}
-                        <span className="premium-badge text-xs" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)' }}>
-                          Rejected
-                        </span>
-                      </div>
-                      <div className="text-sm mt-1 text-[var(--text-muted)]">
-                        {order.client_name} • {order.order_type}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/writer/rejected`)}
-                      className="p-2 rounded-lg hover:bg-[var(--primary-glow)] text-[var(--text-muted)] hover:text-[var(--primary-cyan)] transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-12 text-[var(--text-muted)]">
-                <div className="w-12 h-12 rounded-full bg-[var(--background-dark)] flex items-center justify-center mb-3">
-                  <CheckCircle className="w-6 h-6 text-[var(--success)] opacity-40" />
-                </div>
-                <p>No rejected orders</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

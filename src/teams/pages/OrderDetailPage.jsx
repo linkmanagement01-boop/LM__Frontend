@@ -64,7 +64,7 @@ export function OrderDetailPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold text-[var(--text-main)]">
                         Order Details
                     </h1>
                     <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mt-1">

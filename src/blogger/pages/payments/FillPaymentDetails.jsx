@@ -352,7 +352,7 @@ export function FillPaymentDetails() {
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2 rounded-lg text-white bg-amber-500 hover:bg-amber-600 transition-colors disabled:opacity-50"
+            className="px-6 py-2 rounded-xl font-semibold text-white hover:text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] shadow-sm transition-colors disabled:opacity-50"
           >
             {submitting ? 'Submitting...' : 'Submit'}
           </button>

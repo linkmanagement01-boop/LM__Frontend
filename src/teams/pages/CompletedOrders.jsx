@@ -56,7 +56,7 @@ export function CompletedOrders() {
       {/* Header */}
       <div className="flex bg-[var(--card-background)] p-6 rounded-2xl border border-[var(--border)] items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
             <CheckCircle className="h-8 w-8 text-green-400" />
             Completed Orders
           </h1>
@@ -151,15 +151,14 @@ export function CompletedOrders() {
       {/* Table */}
       {!loading && (
         <div className="premium-table-container">
-          <table className="premium-table">
+          <table className="premium-table table-compact">
             <thead>
               <tr>
                 <th className="w-[120px]">Order ID</th>
                 <th>Order Type</th>
                 <th>Category</th>
                 <th>Manager</th>
-                <th>Client Name</th>
-                <th>Client Website</th>
+                <th>Client</th>
                 <th className="text-center">Links</th>
                 <th>Package</th>
                 <th className="text-center">View</th>
@@ -168,7 +167,7 @@ export function CompletedOrders() {
             <tbody>
               {loading && orders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-[var(--text-muted)]">
+                  <td colSpan={8} className="px-6 py-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <RefreshCw className="h-6 w-6 animate-spin text-[var(--primary-cyan)]" />
                       <span>Loading orders...</span>
@@ -177,7 +176,7 @@ export function CompletedOrders() {
                 </tr>
               ) : pageData.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-[var(--text-muted)]">
+                  <td colSpan={8} className="px-6 py-12 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <CheckCircle className="h-8 w-8 text-[var(--text-muted)] opacity-50" />
                       <span>No completed orders found</span>
@@ -194,25 +193,29 @@ export function CompletedOrders() {
                       {r.order_type || 'Guest Post'}
                     </td>
                     <td>
-                      <span className="premium-badge bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border-[var(--primary-cyan)]/20">
+                      <span className="premium-badge whitespace-nowrap bg-[var(--primary-cyan)]/10 text-[var(--primary-cyan)] border-[var(--primary-cyan)]/20">
                         {r.category || 'General'}
                       </span>
                     </td>
                     <td className="text-[var(--text-secondary)]">{r.manager_name || 'N/A'}</td>
-                    <td className="text-[var(--text-secondary)]">{r.client_name || 'N/A'}</td>
+                    {/* client name with the website under it */}
                     <td>
-                      {r.client_website ? (
-                        <a href={r.client_website} className="text-[var(--primary-cyan)] hover:underline truncate max-w-[150px] inline-block align-bottom" target="_blank" rel="noreferrer">
+                      <div className="text-[var(--text-primary)]">{r.client_name || 'N/A'}</div>
+                      {r.client_website && (
+                        <a href={r.client_website} className="text-xs text-[var(--primary-cyan)] hover:underline truncate max-w-[180px] inline-block align-bottom" target="_blank" rel="noreferrer">
                           {r.client_website}
                         </a>
-                      ) : <span className="text-[var(--text-muted)]">N/A</span>}
+                      )}
                     </td>
                     <td className="text-center">
                       <span className="premium-metric-pill bg-[var(--background-dark)] text-[var(--text-primary)]">
                         {r.no_of_links || 1}
                       </span>
                     </td>
-                    <td className="text-[var(--text-secondary)]">{r.order_package || 'N/A'}</td>
+                    <td className="max-w-[220px]">
+                      {/* package text can be long – two lines, full text on hover */}
+                      <div className="line-clamp-2 text-xs text-[var(--text-secondary)]" title={r.order_package || ''}>{r.order_package || 'N/A'}</div>
+                    </td>
                     <td className="text-center">
                       <button
                         onClick={() => navigate(`/teams/completed-orders/${r.id}/detail`)}

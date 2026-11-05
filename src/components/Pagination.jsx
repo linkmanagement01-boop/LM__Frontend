@@ -65,7 +65,7 @@ export function Pagination({
                 key={p}
                 onClick={() => onPageChange(p)}
                 className={`px-3 h-8 rounded-md text-sm ${p === page ? 'font-semibold' : ''}`}
-                style={{ border: '1px solid var(--border)', color: p === page ? 'white' : 'var(--text-secondary)', background: p === page ? 'linear-gradient(135deg, var(--primary-cyan) 0%, var(--bright-cyan) 100%)' : 'transparent' }}
+                style={{ border: '1px solid var(--border)', color: p === page ? 'white' : 'var(--text-secondary)', background: p === page ? 'var(--color-primary)' : 'transparent', borderColor: p === page ? 'var(--color-primary)' : 'var(--border)' }}
               >
                 {p}
               </button>

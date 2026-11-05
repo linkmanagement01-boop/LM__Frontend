@@ -56,7 +56,8 @@ export function AdminLayout() {
         { label: 'Pending Bulk Upload Requests', to: '/admin/sites/pending-bulk' },
         { label: 'Link Completed', to: '/admin/sites/link-completed' },
         { label: 'Sites', to: '/admin/sites' },
-        { label: 'Suggestions', to: '/admin/sites/suggestions', badge: suggestionCount }
+        { label: 'Suggestions', to: '/admin/sites/suggestions', badge: suggestionCount },
+        { label: 'Traffic Lookup', to: '/admin/sites/traffic-lookup' }
       ]
     },
     {

@@ -6,6 +6,15 @@ import { useAuth } from '../auth/AuthContext.jsx';
 import { NotificationsPanel } from './components/NotificationsPanel.jsx';
 import api, { authAPI } from '../lib/api';
 
+// top-bar title for pages that aren't in the menu (profile pages, withdrawal…)
+const PAGE_TITLES = [
+  [/^\/blogger\/profile/, 'Profile'],
+  [/^\/blogger\/update-profile/, 'Update Profile'],
+  [/^\/blogger\/change-password/, 'Change Password'],
+  [/^\/blogger\/request-withdrawal/, 'Request Withdrawal'],
+];
+const pageTitle = (path) => PAGE_TITLES.find(([re]) => re.test(path))?.[1];
+
 export function BloggerLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -13,6 +22,12 @@ export function BloggerLayout() {
   const base = '/blogger';
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [permissions, setPermissions] = useState(null);
+
+  // popups rendered into <body> (modals, notifications) follow the violet theme too
+  useEffect(() => {
+    document.body.classList.add('theme-violet');
+    return () => document.body.classList.remove('theme-violet');
+  }, []);
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -91,7 +106,8 @@ export function BloggerLayout() {
   }, [allNavItems, permissions]);
 
   return (
-    <div className="h-screen overflow-hidden flex bg-[var(--background-dark)] text-[var(--text-primary)] font-sans transition-colors duration-300">
+    // theme-violet: the new brand colours, as in the other panels
+    <div className="theme-violet h-screen overflow-hidden flex text-[var(--text-primary)] font-sans transition-colors duration-300">
       <ModernSidebar
         navItems={navItems}
         userName={user?.name || 'Blogger User'}
@@ -102,9 +118,10 @@ export function BloggerLayout() {
         onLogout={handleLogout}
         isMobileOpen={isMobileOpen}
         onMobileClose={() => setIsMobileOpen(false)}
+        logo="/brand/logo-mark.svg"
       />
 
-      <div className="flex-1 flex flex-col min-w-0 h-full bg-[var(--background-dark)] relative">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative">
         {/* Desktop Header / Mobile Header Wrapper used to be here, but ModernSidebar handles mobile toggle. 
             We need a header for the page title and notifications. */}
         <header className="h-16 lg:h-20 px-6 lg:px-8 flex items-center justify-between bg-white/70 backdrop-blur-md border-b border-[var(--color-border)] sticky top-0 z-30 transition-all duration-200">
@@ -116,7 +133,7 @@ export function BloggerLayout() {
               <LayoutGrid size={24} />
             </button>
             <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-              {navItems.find(item => item.active)?.label || 'Dashboard'}
+              {pageTitle(pathname) || navItems.find(item => item.active)?.label || 'Dashboard'}
             </h1>
           </div>
 

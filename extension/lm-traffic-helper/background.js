@@ -2,6 +2,7 @@
 // Dashboard "Check traffic" (one site or a batch) → one Ahrefs tab checks the sites one after another →
 // each result is saved to our backend and sent to the dashboard → the tab closes when the batch is done.
 // A single check is a batch of one.
+// A lookup batch (Traffic Lookup tool) checks domains that are not our sites: results are read, not saved.
 // The Ahrefs tab opens in the background; it only comes to the front when Ahrefs wants the person to
 // verify they are human (ahrefs.js sends "needsHuman"), and the dashboard is shown again after the next save.
 
@@ -9,6 +10,7 @@
 const ALLOWED_API = ['http://localhost:5001', 'https://www.api.linkmanagement.net', 'https://api.linkmanagement.net', 'https://api-linkmanagement.femur.studio'];
 const ROLES = ['admin', 'manager'];
 const MAX_BATCH = 25;
+const MAX_LOOKUP = 300; // lookup lists run longer – one Ahrefs tab, human-paced
 const NEXT_DELAY_MS = [4000, 8000]; // human-paced gap between sites (random in this range)
 // Ahrefs answers that mean "stop for now"
 const LIMIT_RE = /limit|quota|too many|\brate\b|blocked|exceeded/i;
@@ -59,7 +61,7 @@ const next = async (b) => {
   b.index += 1;
   if (b.index >= b.items.length) {
     const s = b.items.filter(i => i.status === 'saved').length;
-    return finish(b, 'finished', b.items.length > 1 ? `Done – ${s} of ${b.items.length} saved` : '');
+    return finish(b, 'finished', b.items.length > 1 ? `Done – ${s} of ${b.items.length} ${b.lookup ? 'checked' : 'saved'}` : '');
   }
   b.items[b.index].status = 'checking';
   await setBatch(b);
@@ -77,7 +79,7 @@ const startBatch = async (msg, sender) => {
   if (!ALLOWED_API.some(a => api === a + '/api')) return { ok: false, message: 'This dashboard is not allowed' };
   if (!ROLES.includes(msg.role)) return { ok: false, message: 'Unknown role' };
   if (!msg.token) return { ok: false, message: 'Please log in again' };
-  const items = (msg.sites || []).slice(0, MAX_BATCH)
+  const items = (msg.sites || []).slice(0, msg.lookup ? MAX_LOOKUP : MAX_BATCH)
     .map(s => ({ site_id: s.site_id, domain: cleanDomain(s.domain), status: 'pending' }))
     .filter(s => s.site_id && s.domain);
   if (!items.length) return { ok: false, message: 'No sites to check' };
@@ -91,7 +93,7 @@ const startBatch = async (msg, sender) => {
 
   items[0].status = 'checking';
   const tab = await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
-  const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
+  const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, lookup: !!msg.lookup, dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
   await setBatch(b);
   sendProgress(b);
   return { ok: true, total: items.length };
@@ -104,7 +106,9 @@ const saveCapture = async (msg, sender) => {
   const item = b.items[b.index];
   if (item.status !== 'checking') return { ok: true, message: 'Already saved' };
   try {
-    const res = await fetch(`${b.api}/${b.role}/sites/${item.site_id}/traffic`, {
+    // lookup → read the result only; otherwise save it to the site
+    const url = b.lookup ? `${b.api}/${b.role}/traffic/lookup` : `${b.api}/${b.role}/sites/${item.site_id}/traffic`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${b.token}` },
       body: JSON.stringify({ captures: msg.captures || [], text: msg.text || '' }),

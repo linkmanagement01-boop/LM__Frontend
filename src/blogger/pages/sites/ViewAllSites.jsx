@@ -121,7 +121,7 @@ export function ViewAllSites() {
         <div className="rounded-2xl p-4 flex items-center justify-between" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
           <p className="text-red-400">{error}</p>
           <button onClick={fetchWebsites} className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #6BF0FF 0%, #3ED9EB 100%)', color: 'var(--background-dark)' }}>
+            style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)', color: '#FFFFFF' }}>
             <RefreshCw className="h-4 w-4" /> Retry
           </button>
         </div>
@@ -158,8 +158,7 @@ export function ViewAllSites() {
           <div className="flex gap-3 items-center">
             <button
               onClick={() => { setFilters({ category: '', domain: '', status: '' }); }}
-              className="text-sm"
-              style={{ color: 'var(--text-muted)' }}
+              className="h-10 px-4 rounded-xl text-sm font-semibold border border-[var(--border)] bg-white text-[var(--text-secondary)] hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
             >
               Reset
             </button>
@@ -168,8 +167,8 @@ export function ViewAllSites() {
                 onClick={() => setIsExportModalOpen(true)}
                 className="px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors ml-auto"
                 style={{ 
-                  backgroundColor: 'rgba(107, 240, 255, 0.1)', 
-                  border: '1px solid rgba(107, 240, 255, 0.3)', 
+                  backgroundColor: 'rgba(124, 58, 237, 0.1)', 
+                  border: '1px solid rgba(124, 58, 237, 0.3)', 
                   color: 'var(--primary-cyan)' 
                 }}
               >
@@ -198,7 +197,7 @@ export function ViewAllSites() {
       {!loading && (
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1500px]">
+            <table className="w-full min-w-[980px]">
               <thead style={{ backgroundColor: 'var(--background-dark)' }}>
                 <tr>
                   <th className="px-3 py-3 text-center w-12">
@@ -215,10 +214,8 @@ export function ViewAllSites() {
                   <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>RD</th>
                   <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Spam</th>
                   <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Traffic</th>
-                  <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>GP Price</th>
-                  <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Niche Price</th>
-                  <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>FC GP</th>
-                  <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>FC NE</th>
+                  <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Prices</th>
+                  <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>FC Prices</th>
                   <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Status</th>
                   <th className="px-3 py-3 text-left text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Email</th>
                   <th className="px-3 py-3 text-center text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Action</th>
@@ -240,7 +237,8 @@ export function ViewAllSites() {
                         <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
                           {site.root_domain}
                         </div>
-                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {/* one line – full category list on hover */}
+                        <div className="text-xs truncate max-w-[200px]" style={{ color: 'var(--text-muted)' }} title={site.category || ''}>
                           {site.category || 'General'} • {site.created_at ? new Date(site.created_at).toLocaleDateString() : 'N/A'}
                         </div>
                       </div>
@@ -250,10 +248,15 @@ export function ViewAllSites() {
                     <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.rd || '-'}</td>
                     <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.spam_score || '-'}</td>
                     <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.traffic || '-'}</td>
-                    <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.gp_price || '0'}</td>
-                    <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.niche_edit_price || '0'}</td>
-                    <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.fc_gp || '0'}</td>
-                    <td className="px-3 py-3 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>{site.fc_ne || '0'}</td>
+                    {/* GP / niche edit (and their FC prices) stacked to keep the table on one screen */}
+                    <td className="px-3 py-3 text-center text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                      <div><span style={{ color: 'var(--text-muted)' }}>GP</span> {site.gp_price || '0'}</div>
+                      <div className="mt-0.5"><span style={{ color: 'var(--text-muted)' }}>NE</span> {site.niche_edit_price || '0'}</div>
+                    </td>
+                    <td className="px-3 py-3 text-center text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>
+                      <div><span style={{ color: 'var(--text-muted)' }}>GP</span> {site.fc_gp || '0'}</div>
+                      <div className="mt-0.5"><span style={{ color: 'var(--text-muted)' }}>NE</span> {site.fc_ne || '0'}</div>
+                    </td>
                     <td className="px-3 py-3 text-center">
                       <span
                         className="px-2 py-1 rounded text-xs"
@@ -265,7 +268,7 @@ export function ViewAllSites() {
                         {site.website_status || (site.site_status === '1' || site.site_status === 1 ? 'Active' : 'Inactive')}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <td className="px-3 py-3 text-sm truncate max-w-[120px]" style={{ color: 'var(--text-secondary)' }} title={site.email || ''}>
                       {site.email || '-'}
                     </td>
                     <td className="px-3 py-3 text-center">
@@ -281,7 +284,7 @@ export function ViewAllSites() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={14} className="px-4 py-6 text-center" style={{ color: 'var(--text-muted)' }}>No websites found</td>
+                    <td colSpan={12} className="px-4 py-6 text-center" style={{ color: 'var(--text-muted)' }}>No websites found</td>
                   </tr>
                 )}
               </tbody>

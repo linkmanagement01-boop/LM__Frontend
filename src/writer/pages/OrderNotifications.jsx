@@ -122,12 +122,12 @@ export function OrderNotifications() {
       {/* Search & Filter */}
       <div className="premium-card p-4">
         <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-1">
+          <div className="relative flex-1 w-full">
             <input
               placeholder="Search by ID, client, manager..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="premium-input pl-10"
+              className="premium-input w-full pl-10"
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -150,33 +150,36 @@ export function OrderNotifications() {
       {/* Table */}
       {!loading && (
         <div className="premium-table-container">
-          <table className="premium-table">
+          <table className="premium-table table-compact">
             <thead>
               <tr>
-                <th>Order ID</th>
+                <th style={{ minWidth: '170px' }}>Order ID</th>
                 <th>Type</th>
                 <th>Manager</th>
                 <th>Client</th>
                 <th>Links</th>
-                <th style={{ minWidth: '400px' }}>Insert Statement</th>
-                <th>Pushed Date</th>
+                <th style={{ minWidth: '220px' }}>Insert Statement</th>
                 <th className="text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {pageData.map((task) => (
                 <tr key={task.id} className="group">
+                  {/* order id with the date it was pushed under it */}
                   <td className="font-medium">
-                    <span className="text-[var(--primary-cyan)]">{task.manual_order_id || `#${task.id}`}</span>
+                    <div className="text-[var(--primary-cyan)] break-all">{task.manual_order_id || `#${task.id}`}</div>
+                    <div className="text-xs text-[var(--text-muted)] whitespace-nowrap mt-0.5">
+                      {new Date(task.updated_at || task.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
                   </td>
                   <td>
-                    <span className="premium-badge" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
+                    <span className="premium-badge whitespace-nowrap" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)', color: '#6D28D9' }}>
                       {task.order_type || 'Guest Post'}
                     </span>
                   </td>
                   <td>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-[var(--background-dark)] flex items-center justify-center text-xs font-bold text-[var(--text-muted)] border border-[var(--border)]">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <div className="w-6 h-6 shrink-0 rounded-full bg-[var(--background-dark)] flex items-center justify-center text-xs font-bold text-[var(--text-muted)] border border-[var(--border)]">
                         {(task.manager_name || 'M')[0]}
                       </div>
                       {task.manager_name || 'Manager'}
@@ -188,17 +191,11 @@ export function OrderNotifications() {
                       {task.no_of_links || 1}
                     </span>
                   </td>
-                  <td style={{ maxWidth: '500px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                    <div className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  <td style={{ maxWidth: '360px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                    {/* long statements: three lines here, full text on hover and on the order page */}
+                    <div className="text-sm line-clamp-3" style={{ color: 'var(--text-primary)' }} title={task.statement || ''}>
                       {task.statement || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>—</span>}
                     </div>
-                  </td>
-                  <td className="text-[var(--text-muted)] text-sm">
-                    {new Date(task.updated_at || task.created_at).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
                   </td>
                   <td className="text-right">
                     <div className="flex items-center justify-end gap-2">

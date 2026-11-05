@@ -108,7 +108,7 @@ export function WithdrawalModal({ isOpen, onClose, onSubmit, availableBalance = 
                                     if (error) setError('');
                                 }}
                                 placeholder={`Min $${minAmount}`}
-                                className="w-full pl-8 pr-4 py-3 rounded-xl transition-all focus:ring-2 focus:ring-[#6BF0FF]/50"
+                                className="w-full pl-8 pr-4 py-3 rounded-xl transition-all focus:ring-2 focus:ring-[#7C3AED]/30"
                                 style={{
                                     backgroundColor: 'var(--background-dark)',
                                     border: error ? '1px solid var(--error)' : '1px solid var(--border)',
@@ -150,7 +150,7 @@ export function WithdrawalModal({ isOpen, onClose, onSubmit, availableBalance = 
                         </div>
                     )}
 
-                    <div className="p-3 rounded-xl mb-6" style={{ backgroundColor: 'rgba(107, 240, 255, 0.1)' }}>
+                    <div className="p-3 rounded-xl mb-6" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}>
                         <div className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                             <CheckCircle className="h-4 w-4 mt-0.5" style={{ color: 'var(--primary-cyan)' }} />
                             <span>
@@ -175,8 +175,8 @@ export function WithdrawalModal({ isOpen, onClose, onSubmit, availableBalance = 
                             disabled={submitting || availableBalance < minAmount}
                             className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:opacity-80 disabled:opacity-50"
                             style={{
-                                background: 'linear-gradient(135deg, #6BF0FF 0%, #3ED9EB 100%)',
-                                color: 'var(--background-dark)'
+                                background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+                                color: '#FFFFFF'
                             }}
                         >
                             {submitting ? (

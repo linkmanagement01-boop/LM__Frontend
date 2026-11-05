@@ -29,17 +29,17 @@ export function TaskNotificationCard({ task, onStartWriting, onViewDetails, onSu
                 <div className="flex items-center gap-3">
                     <div
                         className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: 'rgba(107, 240, 255, 0.1)' }}
+                        style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}
                     >
-                        <FileText className="h-6 w-6" style={{ color: '#6BF0FF' }} />
+                        <FileText className="h-6 w-6" style={{ color: '#7C3AED' }} />
                     </div>
                     <div>
                         <span
                             className="px-2 py-1 rounded text-xs font-medium"
                             style={{
-                                backgroundColor: 'rgba(107, 240, 255, 0.1)',
-                                border: '1px solid rgba(107, 240, 255, 0.3)',
-                                color: '#6BF0FF'
+                                backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                                border: '1px solid rgba(124, 58, 237, 0.3)',
+                                color: '#7C3AED'
                             }}
                         >
                             TASK-{task.id}
@@ -105,8 +105,8 @@ export function TaskNotificationCard({ task, onStartWriting, onViewDetails, onSu
                         onClick={() => onSubmitContent(task)}
                         className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:opacity-80"
                         style={{
-                            background: 'linear-gradient(135deg, #6BF0FF 0%, #3ED9EB 100%)',
-                            color: 'var(--background-dark)'
+                            background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
+                            color: '#FFFFFF'
                         }}
                     >
                         <Send className="h-4 w-4" />

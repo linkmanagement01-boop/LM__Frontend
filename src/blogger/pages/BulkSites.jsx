@@ -161,7 +161,7 @@ export function BulkSites() {
               <button onClick={handleUpload} disabled={uploading || !selectedFile}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  backgroundColor: uploading ? '#444' : '#22c55e',
+                  backgroundColor: uploading ? '#A78BFA' : '#7C3AED',
                   color: '#fff', border: 'none', padding: '12px 24px',
                   borderRadius: '6px', fontSize: '14px', fontWeight: '600',
                   cursor: uploading || !selectedFile ? 'not-allowed' : 'pointer',

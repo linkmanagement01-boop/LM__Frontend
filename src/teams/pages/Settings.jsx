@@ -68,7 +68,7 @@ export function Settings() {
                     <SettingsIcon className="h-6 w-6 text-[var(--primary-cyan)]" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Account Settings</h1>
+                    <h1 className="text-2xl font-bold text-[var(--text-main)]">Account Settings</h1>
                     <p className="text-[var(--text-muted)]">Manage your profile and security preferences</p>
                 </div>
             </div>

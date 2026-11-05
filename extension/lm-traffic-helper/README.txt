@@ -16,3 +16,10 @@ Only if Ahrefs asks you to verify you are human, the Ahrefs tab comes to the fro
 check continues by itself, then you are taken back to Link Management. The tab closes when it is done.
 
 If a check isn't saved automatically, click "Save now" in the dark box at the bottom right of the Ahrefs tab.
+
+Traffic Lookup (admin)
+----------------------
+Sites → Traffic Lookup: paste a list of domains (they don't need to be in Link Management) and click Start.
+The helper checks them one after another in a background Ahrefs tab and fills in each domain's top country
+and organic traffic on the page – nothing is saved to your sites. Download the results as Excel when done.
+Needs helper 1.3.0 or newer.
