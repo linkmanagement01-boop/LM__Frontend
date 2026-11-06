@@ -45,14 +45,22 @@ export const helperSupportsAuthority = () => {
   return major > 1 || (major === 1 && minor >= 5);
 };
 
+// Only DR & RD (no Traffic Checker page) needs helper 1.6+
+export const helperSupportsAuthorityOnly = () => {
+  const [major, minor] = (document.documentElement.getAttribute('data-lm-traffic-helper') || '0.0').split('.').map(Number);
+  return major > 1 || (major === 1 && minor >= 6);
+};
+
 /**
  * Check a list of domains – items = [{ key, domain }]; each result comes back as LM_TRAFFIC_RESULT with site_id = key.
- * authority: also read DR, RD (linking websites) and backlinks → result.authority = { dr, rd, backlinks } (null if not loaded)
+ * traffic: open the Traffic Checker (country + traffic) · authority: open the Website Authority Checker →
+ * result.authority = { dr, rd, backlinks } (null if not loaded) · result.traffic_checked = false when traffic was skipped
  */
-export const startTrafficLookup = (items, role = 'admin', { authority = false } = {}) => {
+export const startTrafficLookup = (items, role = 'admin', { traffic = true, authority = false } = {}) => {
   window.postMessage({
     type: 'LM_TRAFFIC_BATCH',
     lookup: true,
+    traffic,
     authority,
     sites: items.slice(0, LOOKUP_MAX).map(i => ({ site_id: i.key, domain: cleanDomain(i.domain) })),
     api: API_BASE_URL,
