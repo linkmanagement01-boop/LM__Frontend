@@ -39,11 +39,21 @@ export const helperSupportsLookup = () => {
   return major > 1 || (major === 1 && minor >= 3);
 };
 
-/** Check a list of domains – items = [{ key, domain }]; each result comes back as LM_TRAFFIC_RESULT with site_id = key */
-export const startTrafficLookup = (items, role = 'admin') => {
+// 'Also check DR & RD' (Ahrefs Website Authority Checker after the traffic) needs helper 1.5+
+export const helperSupportsAuthority = () => {
+  const [major, minor] = (document.documentElement.getAttribute('data-lm-traffic-helper') || '0.0').split('.').map(Number);
+  return major > 1 || (major === 1 && minor >= 5);
+};
+
+/**
+ * Check a list of domains – items = [{ key, domain }]; each result comes back as LM_TRAFFIC_RESULT with site_id = key.
+ * authority: also read DR, RD (linking websites) and backlinks → result.authority = { dr, rd, backlinks } (null if not loaded)
+ */
+export const startTrafficLookup = (items, role = 'admin', { authority = false } = {}) => {
   window.postMessage({
     type: 'LM_TRAFFIC_BATCH',
     lookup: true,
+    authority,
     sites: items.slice(0, LOOKUP_MAX).map(i => ({ site_id: i.key, domain: cleanDomain(i.domain) })),
     api: API_BASE_URL,
     token: localStorage.getItem('authToken'),

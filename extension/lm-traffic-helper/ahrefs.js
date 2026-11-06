@@ -149,7 +149,7 @@
   };
 
   chrome.runtime.sendMessage({ type: 'job' }).then((j) => {
-    if (!j) return; // not opened from Link Management
+    if (!j || j.phase === 'authority') return; // not opened from Link Management / the DR step runs on the other page
     job = j;
     showPanel('Checking traffic… If Ahrefs asks you to verify you are human, complete it.', 'info', true);
     if (captures.length) { clearTimeout(timer); timer = setTimeout(send, SETTLE_MS); }

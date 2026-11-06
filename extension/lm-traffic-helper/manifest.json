@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LM Traffic Helper",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Link Management: 'Check traffic' opens the free Ahrefs Traffic Checker and saves the result to the site.",
   "permissions": [
     "storage"
@@ -49,6 +49,16 @@
         "ahrefs.js"
       ],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://ahrefs.com/website-authority-checker*",
+        "https://ahrefs.com/*/website-authority-checker*"
+      ],
+      "js": [
+        "authority.js"
+      ],
+      "run_at": "document_idle"
     }
   ]
 }

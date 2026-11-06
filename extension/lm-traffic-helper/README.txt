@@ -24,3 +24,9 @@ Sites → Traffic Lookup: paste a list of domains (they don't need to be in Link
 The helper checks them one after another in the separate Ahrefs window and fills in each domain's top country
 and organic traffic on the page – nothing is saved to your sites. Download the results as Excel when done.
 Needs helper 1.3.0 or newer.
+
+Also check DR & RD (Traffic Lookup)
+-----------------------------------
+Tick "Also check DR & RD" before Start: after each domain's traffic, the same Ahrefs window opens the Website
+Authority Checker and reads Domain Rating (DR) and Backlinks (shown as RD). About twice as slow.
+If those don't load, the domain keeps its traffic and shows "DR & RD not loaded". Needs helper 1.5.0 or newer.
