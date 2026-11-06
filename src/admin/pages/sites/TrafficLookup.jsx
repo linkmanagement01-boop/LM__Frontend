@@ -8,7 +8,7 @@ import { exportToExcel } from '../../../utils/exportUtils';
 
 /**
  * Traffic Lookup: paste any list of domains (they don't have to be our sites) → the LM Traffic Helper checks each on
- * Ahrefs in a background tab → top country + organic traffic per domain → download as Excel, in the pasted order.
+ * Ahrefs in its own window → top country + organic traffic per domain → download as Excel, in the pasted order.
  * Nothing is saved to the sites; the list and its results are kept in this browser until cleared.
  */
 const STORE = 'lm_traffic_lookup_v1';
@@ -155,7 +155,7 @@ export function TrafficLookup() {
             </div>
           )}
           <p className="text-xs text-slate-500">
-            Ahrefs runs in a background tab, a few seconds per domain. If it asks you to verify you are human, the tab comes to the front: complete it and the list continues. Results stay on this page if you reload.
+            Ahrefs runs in a small separate window, a few seconds per domain – keep it visible beside this page (not covered or minimised) so its security check passes by itself. If it asks you to verify you are human, that window comes to the front: complete it and the list continues. Results stay on this page if you reload.
           </p>
         </div>
 

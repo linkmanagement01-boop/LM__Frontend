@@ -5,8 +5,9 @@
   const SETTLE_MS = 3000;     // wait for the last result request (countries can come separately)
   const TIMEOUT_MS = 120000;  // no result for this long → skip the site
   // The tab runs in the background. Ask to be shown to the person when Ahrefs is waiting for "verify you are human":
-  const CHALLENGE_WAIT_MS = 5000;  // a human-check box has been on the page this long without results
-  const NO_RESULT_MS = 25000;      // or no results at all this long after the page opened
+  // Cloudflare's check box usually passes by itself – give it time in the background before asking the person
+  const CHALLENGE_WAIT_MS = { page: 8000, box: 20000 }; // full 'Just a moment' page / check box inside the page
+  const NO_RESULT_MS = 40000;      // or no results at all this long after the page opened
   let surfaced = false;
   const captures = [];
   let job = null;
@@ -117,10 +118,10 @@
 
   // ── "Verify you are human" → bring this tab to the front ──
   const challengeShown = () => {
-    if (/just a moment|verify you are human|checking your browser|are you a robot/i.test(document.title)) return true;
+    if (/just a moment|verify you are human|checking your browser|are you a robot/i.test(document.title)) return 'page';
     const box = document.querySelector('iframe[src*="challenges.cloudflare.com"], .cf-turnstile, [id^="cf-chl"], iframe[src*="captcha"], iframe[title*="challenge" i]');
-    if (box && box.getBoundingClientRect().height > 20) return true;
-    return /verify you are human|i'm not a robot|confirm you are human/i.test((document.body?.innerText || '').slice(0, 5000));
+    if (box && box.getBoundingClientRect().height > 20) return 'box';
+    return /verify you are human|i'm not a robot|confirm you are human/i.test((document.body?.innerText || '').slice(0, 5000)) ? 'box' : false;
   };
   const askForHuman = (reason) => {
     if (surfaced || sent || captures.length || !job) return;
@@ -138,9 +139,10 @@
     let seenAt = 0;
     const tick = setInterval(() => {
       if (sent || captures.length || surfaced) return clearInterval(tick);
-      if (challengeShown()) {
+      const kind = challengeShown();
+      if (kind) {
         seenAt = seenAt || Date.now();
-        if (Date.now() - seenAt >= CHALLENGE_WAIT_MS) askForHuman('challenge');
+        if (Date.now() - seenAt >= CHALLENGE_WAIT_MS[kind]) askForHuman('challenge');
       } else seenAt = 0;
       if (Date.now() - started >= NO_RESULT_MS) askForHuman('no_result');
     }, 1000);

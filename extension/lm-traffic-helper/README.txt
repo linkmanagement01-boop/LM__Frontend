@@ -11,15 +11,16 @@ LM Traffic Helper – install (one time, Google Chrome)
 Use
 ---
 View All Sites → "Check traffic" on a domain.
-The check runs in a background Ahrefs tab – you stay on View All Sites and the row updates when it is saved.
-Only if Ahrefs asks you to verify you are human, the Ahrefs tab comes to the front: complete it and the
-check continues by itself, then you are taken back to Link Management. The tab closes when it is done.
+The check runs in a small separate Ahrefs window – you stay on View All Sites and the row updates when it is saved.
+Tip: keep that window visible next to Link Management (don't cover or minimise it) – Ahrefs' security check
+then passes by itself. Only if Ahrefs really asks you to verify you are human, the window comes to the front:
+complete it and the check continues by itself. The window closes when it is done.
 
-If a check isn't saved automatically, click "Save now" in the dark box at the bottom right of the Ahrefs tab.
+If a check isn't saved automatically, click "Save now" in the dark box at the bottom right of the Ahrefs window.
 
 Traffic Lookup (admin)
 ----------------------
 Sites → Traffic Lookup: paste a list of domains (they don't need to be in Link Management) and click Start.
-The helper checks them one after another in a background Ahrefs tab and fills in each domain's top country
+The helper checks them one after another in the separate Ahrefs window and fills in each domain's top country
 and organic traffic on the page – nothing is saved to your sites. Download the results as Excel when done.
 Needs helper 1.3.0 or newer.

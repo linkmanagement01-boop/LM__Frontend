@@ -50,7 +50,8 @@ const finish = async (b, status, message) => {
   await clearBatch();
   setTimeout(async () => {
     // back to the dashboard only if the person is looking at the Ahrefs tab (it came forward for the human check)
-    const ahrefsActive = b.tabId ? await chrome.tabs.get(b.tabId).then(t => t.active, () => false) : false;
+    // (its own window → 'looking at it' means that window has focus)
+    const ahrefsActive = b.tabId ? await chrome.tabs.get(b.tabId).then(t => t.active && chrome.windows.get(t.windowId).then(w => w.focused, () => false), () => false) : false;
     if (b.tabId) chrome.tabs.remove(b.tabId).catch(() => {});
     if (b.surfaced || ahrefsActive) focusTab(b.dashTabId);
   }, 1500);
@@ -92,7 +93,14 @@ const startBatch = async (msg, sender) => {
   }
 
   items[0].status = 'checking';
-  const tab = await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
+  // Ahrefs runs in its own small window (not a tab of the dashboard window): when it needs the person only that
+  // window comes up and the Link Management tab stays where it is; kept visible beside the dashboard, Ahrefs'
+  // security check can pass by itself without anything switching
+  const W = 620, H = 720;
+  const dashWin = sender.tab ? await chrome.windows.get(sender.tab.windowId).catch(() => null) : null;
+  const pos = dashWin?.width ? { left: Math.max(0, dashWin.left + dashWin.width - W - 24), top: Math.max(0, dashWin.top + dashWin.height - H - 24) } : {};
+  const win = await chrome.windows.create({ url: ahrefsUrl(items[0].domain), focused: false, type: 'normal', width: W, height: H, ...pos }).catch(() => null);
+  const tab = win?.tabs?.[0] || await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
   const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, lookup: !!msg.lookup, dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
   await setBatch(b);
   sendProgress(b);
