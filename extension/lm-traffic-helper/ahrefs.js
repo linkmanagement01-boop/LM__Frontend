@@ -14,6 +14,8 @@
   let timeout = null;
   let sent = false;
   let panel = null;
+  // what happened on this page (sent with the 'needsHuman' message, so the dashboard can say why the tab came forward)
+  const diag = { started: false, requests: 0, lastStatus: null };
 
   // ── Small status panel (bottom right) ──
   const button = (text, onClick, light = true) => {
@@ -78,6 +80,7 @@
   window.addEventListener('message', (e) => {
     if (e.source !== window || !e.data?.__lmTraffic) return;
     const { url, status, body } = e.data;
+    diag.requests += 1; diag.lastStatus = status;
     const j = body ? parse(body) : null;
     // Ahrefs error (e.g. a limit) → let the background decide whether to stop
     if (status === 429 || (Array.isArray(j) && j[0] === 'Error')) {
@@ -106,7 +109,8 @@
     if (captures.length || sent) return;
     const input = [...document.querySelectorAll('input')].find(i => /domain|url/i.test(i.placeholder || ''));
     const btn = [...document.querySelectorAll('button')].find(b => /check traffic/i.test(b.textContent || ''));
-    if (!input || !btn) return;
+    if (!input || !btn) { diag.noButton = true; return; }
+    diag.started = true;
     if (!input.value) setInput(input, job.domain);
     setTimeout(() => { if (!captures.length && !sent) btn.click(); }, 300);
   };
@@ -118,11 +122,16 @@
     if (box && box.getBoundingClientRect().height > 20) return true;
     return /verify you are human|i'm not a robot|confirm you are human/i.test((document.body?.innerText || '').slice(0, 5000));
   };
-  const askForHuman = () => {
+  const askForHuman = (reason) => {
     if (surfaced || sent || captures.length || !job) return;
     surfaced = true;
-    chrome.runtime.sendMessage({ type: 'needsHuman' }).catch(() => {});
-    showPanel('Ahrefs wants you to verify you are human. Complete it here – the check continues by itself.', 'info', true);
+    const cf = !!document.querySelector('iframe[src*="challenges.cloudflare.com"], .cf-turnstile, [id^="cf-chl"], script[src*="turnstile"]');
+    const why = reason === 'challenge' ? 'human check shown'
+      : `no result after ${NO_RESULT_MS / 1000}s (${diag.noButton ? 'Check button not found' : diag.started ? 'check started' : 'started from link'}, ${diag.requests} Ahrefs answers${diag.lastStatus ? ', last ' + diag.lastStatus : ''}${cf ? ', Cloudflare check on page' : ''}, tab ${document.visibilityState})`;
+    chrome.runtime.sendMessage({ type: 'needsHuman', why }).catch(() => {});
+    showPanel(reason === 'challenge'
+      ? 'Ahrefs wants you to verify you are human. Complete it here – the check continues by itself.'
+      : `Ahrefs has not answered yet – showing this tab so it can finish. [${why}]`, 'info', true);
   };
   const watchForHuman = () => {
     const started = Date.now();
@@ -131,9 +140,9 @@
       if (sent || captures.length || surfaced) return clearInterval(tick);
       if (challengeShown()) {
         seenAt = seenAt || Date.now();
-        if (Date.now() - seenAt >= CHALLENGE_WAIT_MS) askForHuman();
+        if (Date.now() - seenAt >= CHALLENGE_WAIT_MS) askForHuman('challenge');
       } else seenAt = 0;
-      if (Date.now() - started >= NO_RESULT_MS) askForHuman();
+      if (Date.now() - started >= NO_RESULT_MS) askForHuman('no_result');
     }, 1000);
   };
 

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LM Traffic Helper",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Link Management: 'Check traffic' opens the free Ahrefs Traffic Checker and saves the result to the site.",
   "permissions": [
     "storage"

@@ -175,7 +175,7 @@ const needsHuman = async (msg, sender) => {
   b.surfaced = true;
   await setBatch(b);
   await focusTab(b.tabId);
-  toDashboard(b, { ...progressOf(b), message: 'Ahrefs wants you to verify you are human – switched to the Ahrefs tab' });
+  toDashboard(b, { ...progressOf(b), message: `Switched to the Ahrefs tab – ${msg.why || 'human check shown'}` });
   return { ok: true };
 };
 
