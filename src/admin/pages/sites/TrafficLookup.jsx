@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, Download, Play, Square, Trash2, Loader2, AlertTriangle, Globe } from 'lucide-react';
 import {
-  isHelperInstalled, helperSupportsLookup, startTrafficLookup, stopTrafficBatch, requestTrafficStatus,
+  isHelperInstalled, helperSupportsLookup, helperSupportsAuthority, startTrafficLookup, stopTrafficBatch, requestTrafficStatus,
   onTrafficResult, onTrafficProgress, cleanDomain, HELPER_DOWNLOAD_URL, LOOKUP_MAX
 } from '../../../lib/trafficHelper';
 import { exportToExcel } from '../../../utils/exportUtils';
 
 /**
  * Traffic Lookup: paste any list of domains (they don't have to be our sites) → the LM Traffic Helper checks each on
- * Ahrefs in its own window → top country + organic traffic per domain → download as Excel, in the pasted order.
+ * Ahrefs in its own window → top country + organic traffic per domain (optionally DR, RD and backlinks from the Website
+ * Authority Checker) → download as Excel, in the pasted order.
  * Nothing is saved to the sites; the list and its results are kept in this browser until cleared.
  */
 const STORE = 'lm_traffic_lookup_v1';
@@ -29,21 +30,36 @@ export function TrafficLookup() {
   const saved = load();
   const [text, setText] = useState(saved?.rows?.join('\n') || '');
   const [rows, setRows] = useState(saved?.rows || []);          // pasted order, duplicates kept
-  const [results, setResults] = useState(saved?.results || {}); // key → { country, share, traffic, ok, message }
+  // key → { country, share, traffic, ok, message, auth, dr, rd }
+  // (results saved before RD meant Backlinks had RD = linking websites and a separate backlinks number → RD takes the backlinks)
+  const [results, setResults] = useState(() => Object.fromEntries(Object.entries(saved?.results || {}).map(([k, r]) => {
+    if (!r || !('backlinks' in r)) return [k, r];
+    const { backlinks, ...rest } = r;
+    return [k, { ...rest, rd: backlinks ?? null }];
+  })));
+  const [withAuth, setWithAuth] = useState(!!saved?.withAuth);   // 'Also check DR & RD' – off by default
   const [progress, setProgress] = useState(null);
   const [notice, setNotice] = useState('');
 
-  useEffect(() => { try { localStorage.setItem(STORE, JSON.stringify({ rows, results })); } catch { /* storage full or blocked */ } }, [rows, results]);
+  useEffect(() => { try { localStorage.setItem(STORE, JSON.stringify({ rows, results, withAuth })); } catch { /* storage full or blocked */ } }, [rows, results, withAuth]);
 
   useEffect(() => {
     const offResult = onTrafficResult((r) => {
       if (!r.site_id || !String(r.site_id).startsWith('lk:')) return; // not one of ours
       const key = String(r.site_id).slice(3);
       const top = [...(r.traffic?.top_countries || [])].sort((a, b) => (b.share || 0) - (a.share || 0))[0];
+      // authority: { dr, rd, backlinks } when DR & RD were read, null when that step didn't load, missing when not asked
+      const a = r.authority;
       setResults(prev => ({
         ...prev,
         [key]: r.ok
-          ? { ok: true, country: top ? countryName(top.country) : '', share: top?.share ?? null, traffic: r.traffic?.organic_traffic ?? null, message: top ? '' : 'No country data' }
+          ? {
+            ok: true, country: top ? countryName(top.country) : '', share: top?.share ?? null, traffic: r.traffic?.organic_traffic ?? null, message: top ? '' : 'No country data',
+            // RD column = the Backlinks number on Ahrefs' Website Authority Checker (how our sheet uses RD)
+            ...(a ? { auth: true, dr: a.dr, rd: a.backlinks }
+              : a === null ? { auth: false, authMessage: r.message || 'DR & RD not loaded' }
+                : { auth: prev[key]?.auth, dr: prev[key]?.dr, rd: prev[key]?.rd })
+          }
           : { ok: false, message: r.cancelled ? 'Not checked' : (r.message || 'Failed') }
       }));
     });
@@ -53,9 +69,12 @@ export function TrafficLookup() {
   }, []);
 
   const uniqueKeys = useMemo(() => [...new Set(rows.map(keyOf).filter(Boolean))], [rows]);
-  const todo = uniqueKeys.filter(k => !results[k]?.ok);
+  // with DR & RD on, a domain checked before without them counts as still to do
+  const needs = (k) => !results[k]?.ok || (withAuth && !results[k]?.auth);
+  const todo = uniqueKeys.filter(needs);
+  const showAuth = withAuth || Object.values(results).some(r => r?.auth);
   const running = progress?.status === 'running';
-  const done = uniqueKeys.filter(k => results[k]?.ok).length;
+  const done = uniqueKeys.filter(k => !needs(k)).length;
 
   const takeList = () => {
     // one domain per line; a pasted spreadsheet row keeps only its first cell
@@ -67,13 +86,13 @@ export function TrafficLookup() {
   const start = () => {
     setNotice('');
     if (!isHelperInstalled()) return setNotice('install');
-    if (!helperSupportsLookup()) return setNotice('update');
+    if (!helperSupportsLookup() || (withAuth && !helperSupportsAuthority())) return setNotice('update');
     const list = takeList();
-    const keys = [...new Set(list.map(keyOf).filter(Boolean))].filter(k => !results[k]?.ok);
+    const keys = [...new Set(list.map(keyOf).filter(Boolean))].filter(needs);
     if (!keys.length) return setNotice(list.length ? 'All domains are already checked.' : 'Paste at least one domain.');
     const batch = keys.slice(0, LOOKUP_MAX);
     setProgress({ status: 'running', total: batch.length, done: 0, saved: 0, skipped: 0, current: batch[0] });
-    startTrafficLookup(batch.map(k => ({ key: `lk:${k}`, domain: k })));
+    startTrafficLookup(batch.map(k => ({ key: `lk:${k}`, domain: k })), 'admin', { authority: withAuth });
   };
 
   const clearAll = () => {
@@ -87,7 +106,8 @@ export function TrafficLookup() {
       return {
         'Domain': d,
         'Country Source': r.ok ? r.country : '',
-        'Traffic': r.ok && r.traffic !== null ? r.traffic : ''
+        'Traffic': r.ok && r.traffic !== null ? r.traffic : '',
+        ...(showAuth ? { 'DR': r.dr ?? '', 'RD': r.rd ?? '' } : {})
       };
     }), 'traffic-lookup', true);
   };
@@ -98,7 +118,7 @@ export function TrafficLookup() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Globe className="h-6 w-6 text-violet-600" />Traffic Lookup</h1>
           <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-            Paste any domains to get each one's top country and organic traffic from Ahrefs. They don't need to be in Link Management, and nothing is saved to your sites.
+            Paste any domains to get each one's top country and organic traffic from Ahrefs (and DR &amp; RD if you tick the box). They don't need to be in Link Management, and nothing is saved to your sites.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -113,7 +133,7 @@ export function TrafficLookup() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[360px_minmax(0,640px)] gap-5 items-start">
+      <div className={`grid gap-5 items-start ${showAuth ? 'lg:grid-cols-[360px_minmax(0,1fr)]' : 'lg:grid-cols-[360px_minmax(0,640px)]'}`}>
         {/* List + controls */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           <div>
@@ -123,6 +143,16 @@ export function TrafficLookup() {
               className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 font-mono outline-none placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:bg-slate-50" />
             <p className="text-xs text-slate-500 mt-1.5">Paste straight from your sheet's Domain column. Order and duplicates are kept for the download. Up to {LOOKUP_MAX} new domains per run.</p>
           </div>
+          {/* DR & RD: a second Ahrefs page per domain – slower and more human checks, so off by default */}
+          <label className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 cursor-pointer transition-colors ${withAuth ? 'border-violet-300 bg-violet-50/60' : 'border-slate-200 hover:border-slate-300'} ${running ? 'opacity-60 pointer-events-none' : ''}`}>
+            <input type="checkbox" checked={withAuth} onChange={e => setWithAuth(e.target.checked)} disabled={running}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
+            <span className="text-sm">
+              <span className="font-semibold text-slate-800">Also check DR &amp; RD</span>
+              <span className="block text-xs text-slate-500 mt-0.5">Adds DR (Domain Rating) and RD (Backlinks) from Ahrefs' Website Authority Checker. About twice as slow, and Ahrefs may ask the human check more often.</span>
+            </span>
+          </label>
+
           {running ? (
             <button onClick={stopTrafficBatch} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-red-600 text-sm font-semibold text-white hover:text-white hover:bg-red-700">
               <Square className="h-4 w-4" />Stop
@@ -136,7 +166,7 @@ export function TrafficLookup() {
           )}
 
           {notice === 'install' && <Notice>The LM Traffic Helper isn't installed in this browser. <a href={HELPER_DOWNLOAD_URL} className="font-semibold text-violet-700 underline">Download it</a> and follow the README inside.</Notice>}
-          {notice === 'update' && <Notice>Traffic Lookup needs helper 1.3.0. <a href={HELPER_DOWNLOAD_URL} className="font-semibold text-violet-700 underline">Download the new zip</a>, unzip it over your helper folder, then click Reload on the helper in chrome://extensions.</Notice>}
+          {notice === 'update' && <Notice>{withAuth ? 'Checking DR & RD needs helper 1.5.0.' : 'Traffic Lookup needs helper 1.3.0.'} <a href={HELPER_DOWNLOAD_URL} className="font-semibold text-violet-700 underline">Download the new zip</a>, unzip it over your helper folder, then click Reload on the helper in chrome://extensions.</Notice>}
           {notice && notice !== 'install' && notice !== 'update' && <Notice>{notice}</Notice>}
 
           {progress && (
@@ -168,11 +198,12 @@ export function TrafficLookup() {
           <div className="max-h-[640px] overflow-auto">
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <tr><th className="px-4 py-2.5 w-12">#</th><th className="px-4 py-2.5">Domain</th><th className="px-4 py-2.5">Country</th><th className="px-4 py-2.5 text-right">Traffic</th></tr>
+                <tr><th className="px-4 py-2.5 w-12">#</th><th className="px-4 py-2.5">Domain</th><th className="px-4 py-2.5">Country</th><th className="px-4 py-2.5 text-right">Traffic</th>
+                  {showAuth && <><th className="px-4 py-2.5 text-right">DR</th><th className="px-4 py-2.5 text-right">RD</th></>}</tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.length === 0 ? (
-                  <tr><td colSpan="4" className="px-4 py-14 text-center text-sm text-slate-500">Paste your domains on the left and click Start checking.</td></tr>
+                  <tr><td colSpan={showAuth ? 6 : 4} className="px-4 py-14 text-center text-sm text-slate-500">Paste your domains on the left and click Start checking.</td></tr>
                 ) : rows.map((d, i) => {
                   const k = keyOf(d); const r = results[k];
                   const isNow = running && progress?.current && keyOf(progress.current) === k;
@@ -188,6 +219,12 @@ export function TrafficLookup() {
                               : <span className="text-xs text-slate-400">Waiting</span>}
                       </td>
                       <td className="px-4 py-2 text-right tabular-nums text-slate-600">{r?.ok && r.traffic !== null ? Number(r.traffic).toLocaleString() : ''}</td>
+                      {showAuth && (r?.ok && r.auth === false
+                        ? <td colSpan="2" className="px-4 py-2 text-right text-xs font-semibold text-amber-700" title={r.authMessage}>DR &amp; RD not loaded</td>
+                        : <>
+                          <td className="px-4 py-2 text-right tabular-nums font-semibold text-slate-800">{r?.ok && r.dr != null ? r.dr : ''}</td>
+                          <td className="px-4 py-2 text-right tabular-nums text-slate-600">{r?.ok && r.rd != null ? Number(r.rd).toLocaleString() : ''}</td>
+                        </>)}
                     </tr>
                   );
                 })}

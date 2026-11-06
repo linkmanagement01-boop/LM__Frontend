@@ -26,7 +26,7 @@ window.addEventListener('message', (e) => {
     send({ type: 'startBatch', sites: [{ site_id: d.site_id, domain: d.domain }], api: d.api, token: d.token, role: d.role }, [d.site_id]);
   } else if (d.type === 'LM_TRAFFIC_BATCH') {
     const sites = (d.sites || []).map(s => ({ site_id: s.site_id, domain: s.domain }));
-    send({ type: 'startBatch', sites, api: d.api, token: d.token, role: d.role, lookup: !!d.lookup }, sites.map(s => s.site_id));
+    send({ type: 'startBatch', sites, api: d.api, token: d.token, role: d.role, lookup: !!d.lookup, authority: !!d.authority }, sites.map(s => s.site_id));
   } else if (d.type === 'LM_TRAFFIC_STOP') {
     send({ type: 'stopBatch' });
   } else if (d.type === 'LM_TRAFFIC_STATUS') {

@@ -21,6 +21,8 @@ const clearBatch = () => chrome.storage.session.remove('batch');
 
 const cleanDomain = (d) => String(d || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0];
 const ahrefsUrl = (domain) => `https://ahrefs.com/traffic-checker/?input=${encodeURIComponent(domain)}&mode=subdomains`;
+// Lookup with 'Also check DR & RD': after the traffic, the same window opens the Website Authority Checker
+const authorityUrl = (domain) => `https://ahrefs.com/website-authority-checker/?input=${encodeURIComponent(domain)}`;
 
 const toDashboard = (batch, msg) => {
   if (batch?.dashTabId) chrome.tabs.sendMessage(batch.dashTabId, msg).catch(() => {});
@@ -46,7 +48,10 @@ const finish = async (b, status, message) => {
   b.items.forEach(i => { if (i.status === 'pending' || i.status === 'checking') i.status = 'not_run'; });
   sendProgress(b);
   // Sites the dashboard is still waiting on
-  b.items.filter(i => i.status === 'not_run').forEach(i => toDashboard(b, { type: 'result', site_id: i.site_id, ok: false, cancelled: true, message: b.message }));
+  // (traffic already read, DR & RD still open → send the traffic)
+  b.items.filter(i => i.status === 'not_run').forEach(i => toDashboard(b, i.traffic
+    ? { type: 'result', site_id: i.site_id, ok: true, traffic: i.traffic, authority: null, message: 'DR & RD not checked' }
+    : { type: 'result', site_id: i.site_id, ok: false, cancelled: true, message: b.message }));
   await clearBatch();
   setTimeout(async () => {
     // back to the dashboard only if the person is looking at the Ahrefs tab (it came forward for the human check)
@@ -101,7 +106,7 @@ const startBatch = async (msg, sender) => {
   const pos = dashWin?.width ? { left: Math.max(0, dashWin.left + dashWin.width - W - 24), top: Math.max(0, dashWin.top + dashWin.height - H - 24) } : {};
   const win = await chrome.windows.create({ url: ahrefsUrl(items[0].domain), focused: false, type: 'normal', width: W, height: H, ...pos }).catch(() => null);
   const tab = win?.tabs?.[0] || await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
-  const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, lookup: !!msg.lookup, dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
+  const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, lookup: !!msg.lookup, authority: !!(msg.lookup && msg.authority), dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
   await setBatch(b);
   sendProgress(b);
   return { ok: true, total: items.length };
@@ -130,6 +135,19 @@ const saveCapture = async (msg, sender) => {
       await next(b);
       return { ok: false, message };
     }
+    if (b.authority) {
+      // traffic read → same window opens the Website Authority Checker; the result goes out once DR & RD are in
+      item.traffic = data.traffic;
+      item.phase = 'authority';
+      await setBatch(b);
+      const wait = 1500 + Math.random() * 2000;
+      setTimeout(async () => {
+        const cur = await getBatch();
+        if (!cur || cur.status !== 'running' || cur.id !== b.id || cur.index !== b.index) return;
+        chrome.tabs.update(b.tabId, { url: authorityUrl(item.domain) }).catch(() => finish(b, 'stopped', 'The Ahrefs tab was closed'));
+      }, wait);
+      return { ok: true, message: 'Traffic read ✓ – now checking DR & RD…' };
+    }
     item.status = 'saved';
     toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: data.traffic, message: data.message });
     const more = b.index + 1 < b.items.length;
@@ -146,12 +164,35 @@ const saveCapture = async (msg, sender) => {
   }
 };
 
+/** DR / Linking websites / Backlinks from the Website Authority Checker → result with the traffic → next */
+const saveAuthority = async (msg, sender) => {
+  const b = await getBatch();
+  if (!b || b.status !== 'running' || sender.tab?.id !== b.tabId) return { ok: false, message: 'This tab was not opened from Link Management' };
+  const item = b.items[b.index];
+  if (item.status !== 'checking' || item.phase !== 'authority') return { ok: true, message: 'Already saved' };
+  const num = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
+  const authority = { dr: num(msg.dr), rd: num(msg.rd), backlinks: num(msg.backlinks) };
+  item.status = 'saved';
+  toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: item.traffic, authority });
+  const more = b.index + 1 < b.items.length;
+  if (b.surfaced && more) { b.surfaced = false; focusTab(b.dashTabId); }
+  await next(b);
+  return { ok: true, message: `DR & RD read ✓${more ? ' – next site…' : ' – closing this window…'}` };
+};
+
 /** No result for the current site (timeout / Skip button) */
 const skipCurrent = async (msg, sender) => {
   const b = await getBatch();
   if (!b || b.status !== 'running' || sender.tab?.id !== b.tabId) return { ok: false };
   const item = b.items[b.index];
   if (item.status !== 'checking') return { ok: true };
+  if (item.phase === 'authority' && item.traffic) {
+    // traffic is in – only DR & RD are missing
+    item.status = 'saved';
+    toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: item.traffic, authority: null, message: 'DR & RD not loaded' });
+    await next(b);
+    return { ok: true };
+  }
   item.status = 'skipped';
   toDashboard(b, { type: 'result', site_id: item.site_id, ok: false, message: msg.reason || 'Skipped – no result from Ahrefs' });
   await next(b);
@@ -198,8 +239,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     : msg.type === 'stopBatch' ? stopBatch()
     : msg.type === 'status' ? getBatch().then(b => (b ? progressOf(b) : null))
     : msg.type === 'job' ? getBatch().then(b => (b && b.status === 'running' && sender.tab?.id === b.tabId
-      ? { domain: b.items[b.index].domain, position: b.index + 1, total: b.items.length } : null))
+      ? { domain: b.items[b.index].domain, position: b.index + 1, total: b.items.length, phase: b.items[b.index].phase || 'traffic' } : null))
     : msg.type === 'captured' ? saveCapture(msg, sender)
+    : msg.type === 'authority' ? saveAuthority(msg, sender)
     : msg.type === 'skip' ? skipCurrent(msg, sender)
     : msg.type === 'ahrefsError' ? ahrefsError(msg, sender)
     : msg.type === 'needsHuman' ? needsHuman(msg, sender)
