@@ -155,6 +155,7 @@ function InstallHelperModal({ domain, onClose, update = false }) {
 // ─── Bulk check ───────────────────────────────────────────────────────
 
 const QUICK_COUNT = 10;
+const AUTO_PAUSE_MS = 15000; // Auto: human-paced pause between two batches of 10
 
 /**
  * "Check traffic (N selected)", "Check 10 unchecked" and "Re-check 10" for View All Sites, and the progress box.
@@ -162,6 +163,8 @@ const QUICK_COUNT = 10;
  * unchecked = newest added first, re-check = oldest check first (checked more than 7 days ago).
  * status = the list's status filter (admin); managers always get approved sites.
  * The helper checks the sites one after another in one Ahrefs tab; each row updates as its site is saved.
+ * Auto (switch beside "Check 10 unchecked"): when a batch finishes, the next 10 unchecked start by themselves after a
+ * short pause – until every site is checked, the switch is turned off, or a batch is stopped (Stop / Ahrefs limit / login).
  */
 export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' }) {
   const [modal, setModal] = useState(null); // install | update
@@ -169,6 +172,17 @@ export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' 
   const [queue, setQueue] = useState(null); // { unchecked, recheck_due, recheck_min_days }
   const [loadingType, setLoadingType] = useState(null);
   const [note, setNote] = useState('');
+  const [auto, setAuto] = useState(false);
+  const [autoWaiting, setAutoWaiting] = useState(false); // pause before the next automatic batch
+  const autoRef = useRef(false);
+  const autoTimer = useRef(null);
+  const runQueueRef = useRef(null);
+  const setAutoOn = (on) => {
+    autoRef.current = on;
+    setAuto(on);
+    if (!on) { clearTimeout(autoTimer.current); setAutoWaiting(false); }
+  };
+  useEffect(() => () => clearTimeout(autoTimer.current), []);
 
   const loadCounts = useCallback(() => {
     api.get(`/${role}/sites/traffic-queue`, { params: { status } }).then(({ data }) => setQueue(data)).catch(() => {});
@@ -179,9 +193,20 @@ export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' 
   useEffect(() => {
     const off = onTrafficProgress((p) => {
       if (p.status === 'idle') return;
+      if (p.status === 'error' && autoRef.current) setAutoOn(false); // the helper could not start a batch
       if (p.status === 'error') return setProgress({ status: 'stopped', total: 0, done: 0, saved: 0, skipped: 0, message: p.message });
       if (p.total > 1) setProgress(p); // single checks show on their own button
       if (p.status === 'finished' || p.status === 'stopped') loadCounts();
+      // Auto: a finished batch → the next 10 after a short pause; a stopped one (Stop, Ahrefs limit, login) ends Auto
+      if (autoRef.current && p.status === 'stopped') { setAutoOn(false); setNote('Auto stopped'); }
+      if (autoRef.current && p.status === 'finished') {
+        clearTimeout(autoTimer.current);
+        setAutoWaiting(true);
+        autoTimer.current = setTimeout(() => {
+          setAutoWaiting(false);
+          if (autoRef.current) runQueueRef.current?.('unchecked');
+        }, AUTO_PAUSE_MS);
+      }
     });
     if (isHelperInstalled()) requestTrafficStatus(); // a batch may still be running after a page reload
     return off;
@@ -209,14 +234,25 @@ export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' 
       const { data } = await api.get(`/${role}/sites/traffic-queue`, { params: { type, status, limit: QUICK_COUNT } });
       setQueue(data);
       if (!data.sites.length) {
+        if (type === 'unchecked' && autoRef.current) setAutoOn(false);
         return setNote(type === 'unchecked' ? 'All sites are checked' : `All sites were checked in the last ${data.recheck_min_days} days`);
       }
       run(data.sites);
     } catch {
+      if (autoRef.current) setAutoOn(false);
       setNote('Could not load the next sites – try again');
     } finally {
       setLoadingType(null);
     }
+  };
+  runQueueRef.current = runQueue;
+
+  const toggleAuto = () => {
+    if (auto) return setAutoOn(false); // the batch already running finishes; no new one starts
+    if (!isHelperInstalled()) return setModal('install');
+    if (!helperSupportsBatch()) return setModal('update');
+    setAutoOn(true);
+    if (!running && !loadingType) runQueue('unchecked');
   };
 
   const btn = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold whitespace-nowrap transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
@@ -238,6 +274,16 @@ export function TrafficBatchBar({ sites, selectedIds, role, status = 'Approved' 
             style={{ color: 'var(--text-secondary)' }} title="Check the next never-checked sites from the whole list, newest added first">
             {loadingType === 'unchecked' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
             {queue?.unchecked === 0 ? 'All sites checked' : `Check ${QUICK_COUNT} unchecked${queue ? ` (${queue.unchecked.toLocaleString()} left)` : ''}`}
+          </button>
+          {/* Auto: keeps clicking "Check 10 unchecked" for you, batch after batch */}
+          <button type="button" role="switch" aria-checked={auto} onClick={toggleAuto} disabled={!auto && queue?.unchecked === 0}
+            className={`${btn} ${auto ? 'border-brand bg-brand/10 text-brand' : 'border-[var(--border)] hover:border-brand hover:text-brand'}`}
+            style={auto ? undefined : { color: 'var(--text-secondary)' }}
+            title={auto ? 'Auto is on – the next 10 unchecked start by themselves after each batch. Click to turn it off.' : 'Turn on to check all unchecked sites automatically, 10 at a time'}>
+            <span className={`relative inline-block w-7 h-4 rounded-full transition-colors ${auto ? 'bg-brand' : 'bg-slate-300'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${auto ? 'translate-x-3' : ''}`} />
+            </span>
+            Auto{auto && autoWaiting ? ' · next 10 soon…' : ''}
           </button>
           <button disabled={running || !!loadingType} onClick={() => runQueue('recheck')}
             className={`${btn} border-[var(--border)] hover:border-brand hover:text-brand`}
