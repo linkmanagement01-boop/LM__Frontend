@@ -25,8 +25,10 @@ The helper checks them one after another in the separate Ahrefs window and fills
 and organic traffic on the page – nothing is saved to your sites. Download the results as Excel when done.
 Needs helper 1.3.0 or newer.
 
-Also check DR & RD (Traffic Lookup)
------------------------------------
-Tick "Also check DR & RD" before Start: after each domain's traffic, the same Ahrefs window opens the Website
-Authority Checker and reads Domain Rating (DR) and Backlinks (shown as RD). About twice as slow.
-If those don't load, the domain keeps its traffic and shows "DR & RD not loaded". Needs helper 1.5.0 or newer.
+Choosing what to check (Traffic Lookup)
+---------------------------------------
+Country, Traffic, DR and RD are all ticked by default – untick what you don't need before Start.
+Country & Traffic come from the Traffic Checker; DR and RD (= Backlinks) from the Website Authority Checker.
+A page is only opened when one of its fields is ticked, so unticking a pair makes the run faster.
+If DR & RD don't load, the domain keeps its other results and shows "DR & RD not loaded".
+Needs helper 1.5.0 or newer; checking only DR / RD needs 1.6.0.

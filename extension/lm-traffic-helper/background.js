@@ -50,7 +50,7 @@ const finish = async (b, status, message) => {
   // Sites the dashboard is still waiting on
   // (traffic already read, DR & RD still open → send the traffic)
   b.items.filter(i => i.status === 'not_run').forEach(i => toDashboard(b, i.traffic
-    ? { type: 'result', site_id: i.site_id, ok: true, traffic: i.traffic, authority: null, message: 'DR & RD not checked' }
+    ? { type: 'result', site_id: i.site_id, ok: true, traffic: i.traffic, traffic_checked: true, authority: null, message: 'DR & RD not checked' }
     : { type: 'result', site_id: i.site_id, ok: false, cancelled: true, message: b.message }));
   await clearBatch();
   setTimeout(async () => {
@@ -62,6 +62,9 @@ const finish = async (b, status, message) => {
   }, 1500);
 };
 
+/** First page for a site: the Traffic Checker, or the Website Authority Checker when only DR & RD are asked */
+const firstUrl = (b, item) => (item.phase === 'authority' ? authorityUrl(item.domain) : ahrefsUrl(item.domain));
+
 /** Move on to the next site (or finish) */
 const next = async (b) => {
   b.index += 1;
@@ -70,13 +73,14 @@ const next = async (b) => {
     return finish(b, 'finished', b.items.length > 1 ? `Done – ${s} of ${b.items.length} ${b.lookup ? 'checked' : 'saved'}` : '');
   }
   b.items[b.index].status = 'checking';
+  if (b.skipTraffic) b.items[b.index].phase = 'authority';
   await setBatch(b);
   sendProgress(b);
   const wait = NEXT_DELAY_MS[0] + Math.random() * (NEXT_DELAY_MS[1] - NEXT_DELAY_MS[0]);
   setTimeout(async () => {
     const cur = await getBatch();
     if (!cur || cur.status !== 'running' || cur.id !== b.id) return;
-    chrome.tabs.update(b.tabId, { url: ahrefsUrl(b.items[b.index].domain) }).catch(() => finish(b, 'stopped', 'The Ahrefs tab was closed'));
+    chrome.tabs.update(b.tabId, { url: firstUrl(b, b.items[b.index]) }).catch(() => finish(b, 'stopped', 'The Ahrefs tab was closed'));
   }, wait);
 };
 
@@ -97,16 +101,21 @@ const startBatch = async (msg, sender) => {
     if (alive) return { ok: false, message: 'A traffic check is already running – wait for it or stop it first' };
   }
 
+  // lookup with only DR & RD ticked → no Traffic Checker page at all
+  const authority = !!(msg.lookup && msg.authority);
+  const skipTraffic = authority && msg.traffic === false;
+  if (msg.lookup && msg.traffic === false && !authority) return { ok: false, message: 'Nothing to check' };
   items[0].status = 'checking';
+  if (skipTraffic) items[0].phase = 'authority';
   // Ahrefs runs in its own small window (not a tab of the dashboard window): when it needs the person only that
   // window comes up and the Link Management tab stays where it is; kept visible beside the dashboard, Ahrefs'
   // security check can pass by itself without anything switching
   const W = 620, H = 720;
   const dashWin = sender.tab ? await chrome.windows.get(sender.tab.windowId).catch(() => null) : null;
   const pos = dashWin?.width ? { left: Math.max(0, dashWin.left + dashWin.width - W - 24), top: Math.max(0, dashWin.top + dashWin.height - H - 24) } : {};
-  const win = await chrome.windows.create({ url: ahrefsUrl(items[0].domain), focused: false, type: 'normal', width: W, height: H, ...pos }).catch(() => null);
-  const tab = win?.tabs?.[0] || await chrome.tabs.create({ url: ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
-  const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, lookup: !!msg.lookup, authority: !!(msg.lookup && msg.authority), dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
+  const win = await chrome.windows.create({ url: skipTraffic ? authorityUrl(items[0].domain) : ahrefsUrl(items[0].domain), focused: false, type: 'normal', width: W, height: H, ...pos }).catch(() => null);
+  const tab = win?.tabs?.[0] || await chrome.tabs.create({ url: skipTraffic ? authorityUrl(items[0].domain) : ahrefsUrl(items[0].domain), active: false, index: (sender.tab?.index ?? 0) + 1 });
+  const b = { id: Date.now(), items, index: 0, api, token: msg.token, role: msg.role, lookup: !!msg.lookup, authority, skipTraffic, dashTabId: sender.tab?.id, tabId: tab.id, status: 'running' };
   await setBatch(b);
   sendProgress(b);
   return { ok: true, total: items.length };
@@ -137,7 +146,7 @@ const saveCapture = async (msg, sender) => {
     }
     if (b.authority) {
       // traffic read → same window opens the Website Authority Checker; the result goes out once DR & RD are in
-      item.traffic = data.traffic;
+      item.traffic = data.traffic || {};
       item.phase = 'authority';
       await setBatch(b);
       const wait = 1500 + Math.random() * 2000;
@@ -149,7 +158,7 @@ const saveCapture = async (msg, sender) => {
       return { ok: true, message: 'Traffic read ✓ – now checking DR & RD…' };
     }
     item.status = 'saved';
-    toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: data.traffic, message: data.message });
+    toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: data.traffic, traffic_checked: true, message: data.message });
     const more = b.index + 1 < b.items.length;
     // the person was sent to Ahrefs for the human check → back to the dashboard, the rest runs in the background
     if (b.surfaced && more) { b.surfaced = false; focusTab(b.dashTabId); }
@@ -173,7 +182,7 @@ const saveAuthority = async (msg, sender) => {
   const num = (v) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
   const authority = { dr: num(msg.dr), rd: num(msg.rd), backlinks: num(msg.backlinks) };
   item.status = 'saved';
-  toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: item.traffic, authority });
+  toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: item.traffic || null, traffic_checked: !b.skipTraffic, authority });
   const more = b.index + 1 < b.items.length;
   if (b.surfaced && more) { b.surfaced = false; focusTab(b.dashTabId); }
   await next(b);
@@ -186,10 +195,10 @@ const skipCurrent = async (msg, sender) => {
   if (!b || b.status !== 'running' || sender.tab?.id !== b.tabId) return { ok: false };
   const item = b.items[b.index];
   if (item.status !== 'checking') return { ok: true };
-  if (item.phase === 'authority' && item.traffic) {
+  if (item.phase === 'authority' && (item.traffic || b.skipTraffic)) {
     // traffic is in – only DR & RD are missing
     item.status = 'saved';
-    toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: item.traffic, authority: null, message: 'DR & RD not loaded' });
+    toDashboard(b, { type: 'result', site_id: item.site_id, ok: true, traffic: item.traffic || null, traffic_checked: !b.skipTraffic, authority: null, message: 'DR & RD not loaded' });
     await next(b);
     return { ok: true };
   }
