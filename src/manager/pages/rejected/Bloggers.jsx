@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Layout } from '../../components/layout/Layout';
 import { Pagination } from '../../../components/Pagination.jsx';
@@ -8,7 +8,9 @@ export const RejectedBloggers = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ orderId: '', user: '' });
+  const EMPTY = { orderId: '', user: '', domain: '' };
+  const [filters, setFilters] = useState(EMPTY);
+  const [applied, setApplied] = useState(EMPTY); // searched on the server, a moment after typing stops
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -19,7 +21,7 @@ export const RejectedBloggers = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await managerAPI.getRejectedOrders(page, pageSize);
+      const response = await managerAPI.getRejectedOrders(page, pageSize, { order_id: applied.orderId.trim(), user: applied.user.trim(), domain: applied.domain.trim() });
       setOrders(response.orders || []);
       setTotal(response.total || 0);
     } catch (err) {
@@ -28,11 +30,20 @@ export const RejectedBloggers = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize]);
+  }, [page, pageSize, applied]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  // Typing pauses for a moment → search the whole list from page 1
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setApplied(a => (a.orderId === filters.orderId && a.user === filters.user && a.domain === filters.domain ? a : filters));
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [filters]);
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
@@ -44,27 +55,15 @@ export const RejectedBloggers = () => {
     });
   };
 
-  // Filter orders locally
-  const filteredOrders = useMemo(() => {
-    let list = orders;
-    if (filters.orderId) {
-      list = list.filter(x => (x.order_id || '').toLowerCase().includes(filters.orderId.toLowerCase()));
-    }
-    if (filters.user) {
-      list = list.filter(x =>
-        (x.blogger_name || '').toLowerCase().includes(filters.user.toLowerCase()) ||
-        (x.blogger_email || '').toLowerCase().includes(filters.user.toLowerCase())
-      );
-    }
-    return list;
-  }, [orders, filters]);
+  const filteredOrders = orders; // the server already applied the searches
+  const searching = !!(applied.orderId || applied.user || applied.domain);
 
   return (
     <Layout>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Rejected Orders - Bloggers</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-text-secondary">{total} total rejected orders</span>
+          <span className="text-sm text-text-secondary">{total} {searching ? 'matching' : 'total'} rejected orders</span>
           <button
             onClick={fetchOrders}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -86,9 +85,9 @@ export const RejectedBloggers = () => {
       <div className="bg-surface border border-border rounded-lg p-4 mb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="font-medium text-text-secondary">Filters</div>
-          <button className="text-error text-sm" onClick={() => setFilters({ orderId: '', user: '' })}>Reset</button>
+          <button className="text-error text-sm" onClick={() => setFilters(EMPTY)}>Reset</button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <label className="block text-sm text-text-secondary mb-1">Order Id</label>
             <input
@@ -105,6 +104,15 @@ export const RejectedBloggers = () => {
               placeholder="Search by blogger name or email..."
               value={filters.user}
               onChange={(e) => setFilters(f => ({ ...f, user: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-text-secondary mb-1">Domain</label>
+            <input
+              className="input w-full"
+              placeholder="Search by root domain..."
+              value={filters.domain}
+              onChange={(e) => setFilters(f => ({ ...f, domain: e.target.value }))}
             />
           </div>
         </div>
@@ -137,7 +145,7 @@ export const RejectedBloggers = () => {
             ) : filteredOrders.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted">
-                  No rejected blogger orders
+                  {searching ? 'No rejected orders match your search' : 'No rejected blogger orders'}
                 </td>
               </tr>
             ) : (
