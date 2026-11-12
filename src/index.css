@@ -521,3 +521,13 @@ table.table-compact td { padding: 12px 14px; }
 
 /* labels inside the premium buttons take the button's colour (the global span colour made them dark on violet) */
 .premium-btn span { color: inherit; }
+
+/* Site cards: the metric columns follow the CARD's width (not the screen) – 4 in one row whenever the card has room.
+   Dividers are the 1px gaps showing the grid's background. */
+.site-card { container-type: inline-size; }
+.site-card-metrics { display: grid; gap: 1px; grid-template-columns: 1fr; }
+@container (min-width: 480px) { .site-card-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 760px) { .site-card-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* three columns (admin Sites card): one row from 600px, never a half-empty 2×2 */
+.site-card-metrics.cols-3 { grid-template-columns: 1fr; }
+@container (min-width: 600px) { .site-card-metrics.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

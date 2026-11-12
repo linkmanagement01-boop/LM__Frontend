@@ -108,7 +108,8 @@ export function TrafficCheckButton({ site, role, onSaved, size = 'sm', label }) 
     <>
       <button
         onClick={click}
-        title={message || 'Check organic traffic on Ahrefs (free)'}
+        // hover: when the site was last checked (the card no longer shows the date)
+        title={message || (site.ahrefs_checked_at ? `Last checked ${checkedLabel(site.ahrefs_checked_at)} – click to check again on Ahrefs` : 'Check organic traffic on Ahrefs (free)')}
         className={`inline-flex items-center gap-1.5 rounded-lg border font-bold whitespace-nowrap transition-colors ${pad} ${tone}`}
       >
         <Icon className={`h-3.5 w-3.5 ${state === 'waiting' ? 'animate-spin' : ''}`} />
@@ -662,7 +663,6 @@ export function AhrefsVolume({ site, role, Row }) {
           </span>
         } />
       )}
-      {t && <div className="text-[11px] text-right" style={{ color: 'var(--text-muted)' }}>Checked {checkedLabel(t.checked_at)}</div>}
     </div>
   );
 }
