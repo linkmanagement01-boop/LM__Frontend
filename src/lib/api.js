@@ -668,8 +668,9 @@ export const managerAPI = {
     return response.data;
   },
 
-  getRejectedOrders: async (page = 1, limit = 20) => {
-    const response = await api.get('/manager/rejected-orders', { params: { page, limit } });
+  // search = { order_id, user, domain } – searched across all rejected orders
+  getRejectedOrders: async (page = 1, limit = 20, search = {}) => {
+    const response = await api.get('/manager/rejected-orders', { params: { page, limit, ...search } });
     return response.data;
   },
 
