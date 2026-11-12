@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, X, Eye, RefreshCw, FileText, SlidersHorizontal, Columns, Calendar, Download } from 'lucide-react';
 import { adminAPI } from '../../../lib/api';
@@ -86,6 +86,19 @@ export function AdminOrders() {
         { key: 'completed_at', label: 'Completed At' }
     ];
 
+    // Quick search runs on the server (all orders, not just this page), a moment after typing stops
+    const [appliedSearch, setAppliedSearch] = useState('');
+    useEffect(() => {
+        const t = setTimeout(() => {
+            const q = filters.search.trim();
+            setAppliedSearch(prev => {
+                if (prev !== q) setPage(1);
+                return q;
+            });
+        }, 400);
+        return () => clearTimeout(t);
+    }, [filters.search]);
+
     const fetchOrders = useCallback(async () => {
         try {
             setLoading(true);
@@ -93,6 +106,7 @@ export function AdminOrders() {
 
             // Build query params
             const queryParams = { page, limit: pageSize };
+            if (appliedSearch) queryParams.search = appliedSearch;
             if (filters.status) queryParams.status = filters.status;
             if (filters.order_id) queryParams.order_id = filters.order_id;
             if (filters.category) queryParams.category = filters.category;
@@ -111,23 +125,13 @@ export function AdminOrders() {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, filters.status, filters.order_id, filters.category, filters.client_name, filters.client_website, filters.ordered_at_from, filters.ordered_at_to]);
+    }, [page, pageSize, appliedSearch, filters.status, filters.order_id, filters.category, filters.client_name, filters.client_website, filters.ordered_at_from, filters.ordered_at_to, filters.manager_id]);
 
     useEffect(() => {
         fetchOrders();
     }, [fetchOrders]);
 
-    // Local search filter (for instant search)
-    const filteredOrders = useMemo(() => {
-        const q = filters.search.trim().toLowerCase();
-        if (!q) return orders;
-        return orders.filter(o =>
-            (o.order_id || '').toLowerCase().includes(q) ||
-            (o.client_name || '').toLowerCase().includes(q) ||
-            (o.manager_name || '').toLowerCase().includes(q) ||
-            (o.client_website || '').toLowerCase().includes(q)
-        );
-    }, [orders, filters.search]);
+    const filteredOrders = orders; // the server already applied the search
 
     const getStatusBadge = (status, workflowLocation) => {
         const statusStyles = {
