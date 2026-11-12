@@ -63,7 +63,7 @@ export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSel
 
     return (
         <div
-            className="rounded-xl transition-shadow duration-300 hover:shadow-lg animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards overflow-hidden"
+            className="site-card rounded-xl transition-shadow duration-300 hover:shadow-lg animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards overflow-hidden"
             style={{ backgroundColor: 'var(--card-background)', border: `1px solid ${isSelected ? 'var(--primary-cyan)' : 'var(--border)'}`, ...style }}
         >
             {/* Header: domain · tags · price · actions */}
@@ -144,7 +144,8 @@ export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSel
                     </div>
                 </div>
             ) : (
-                <div className="border-t grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" style={{ borderColor: 'var(--border)' }}>
+                <div className="border-t site-card-metrics cols-3" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--border)' }}>
+                    {/* Authority · Links & Trust · Volume in one row whenever the card is wide enough (see .site-card-metrics in index.css) */}
                     {/* prices are in the header and the status is a chip there, so they aren't repeated here */}
                     <CardColumn title="Authority">
                         <StatRow label="DA (Moz)" value={site.da || '-'} />
@@ -157,10 +158,6 @@ export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSel
                     <CardColumn title="Volume">
                         {site.ahrefs_traffic == null && <StatRow label="Traffic" value={site.traffic && !isNaN(site.traffic) ? Number(site.traffic).toLocaleString() : (site.traffic || '-')} />}
                         <AhrefsVolume site={site} role={role} Row={StatRow} />
-                    </CardColumn>
-                    <CardColumn title="Activity">
-                        <StatRow label="Manual Tag" value={site.website_status || '-'} />
-                        <StatRow label="Latest Order" value={site.lo_created_at ? shortDate(site.lo_created_at) : 'Never used'} />
                     </CardColumn>
                 </div>
             )}
@@ -235,7 +232,7 @@ export function CategoryPopover({ domain, category, niche }) {
 
 export function CardColumn({ title, children }) {
     return (
-        <div className="px-5 py-4 border-b sm:[&:nth-child(odd)]:border-r xl:border-b-0 xl:border-r xl:last:border-r-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="px-4 py-4" style={{ backgroundColor: 'var(--card-background)' }}>
             <div className="text-[11px] font-extrabold uppercase tracking-wider mb-2.5" style={{ color: 'var(--text-primary)' }}>{title}</div>
             <div className="space-y-2.5">{children}</div>
         </div>
