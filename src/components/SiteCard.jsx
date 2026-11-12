@@ -83,7 +83,7 @@ export function SiteCard({ site, role = 'admin', onOpen, isSelected, onToggleSel
                         {isSiteNew(site.created_at) && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand text-white uppercase tracking-wider">New</span>}
                         {/* category – the category + website niche show in a hover card, like the email */}
                         <CategoryPopover domain={site.root_domain} category={fcCategory || site.category || site.niche || 'General'} niche={fcCategory ? FC_CATEGORIES.join(', ') : site.website_niche} />
-                        <span className={`px-2 py-1 rounded-md border text-[10px] font-bold uppercase ${statusCls}`}>{site.website_status || statusLabel}</span>
+                        <span className={`px-2 py-1 rounded-md border text-[10px] font-bold uppercase ${statusCls}`} title={site.website_status ? `Manual tag: ${site.website_status}` : undefined}>{statusLabel}</span>
                         {site.email && (
                             /* icon only – the address shows in a hover card, like the Ahrefs popups */
                             <EmailPopover domain={site.root_domain} email={site.email} />
