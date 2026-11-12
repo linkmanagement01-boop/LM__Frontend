@@ -423,11 +423,11 @@ export const OrderDetails = () => {
                                                     </td>
                                                 </tr>
                                             )}
-                                            {/* Rejected Red Bar */}
-                                            {item.status === 11 && (
+                                            {/* Rejected Red Bar (11 = manager rejected, 12 = blogger rejected) */}
+                                            {(item.status === 11 || item.status === 12) && (
                                                 <tr>
                                                     <td className="py-3 px-4 font-bold text-white text-sm" style={{ backgroundColor: '#ef4444' }}>
-                                                        Manager Rejected
+                                                        {item.status === 12 ? 'Blogger Rejected' : 'Manager Rejected'}
                                                     </td>
                                                     <td className="py-3 px-4 font-bold text-white text-sm" style={{ backgroundColor: '#ef4444' }}>
                                                         {item.reject_reason || '-'}
