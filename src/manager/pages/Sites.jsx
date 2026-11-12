@@ -180,7 +180,7 @@ export function Sites() {
                 <div className="text-sm font-medium shrink-0 text-[var(--text-primary)]" title="Sites shown on this page">
                   <span className="text-[var(--primary-cyan)]">{showingFrom}-{showingTo}</span> of {pagination.total}
                 </div>
-                <TrafficBatchBar sites={websites} selectedIds={selectedRows} role="manager" />
+                <TrafficBatchBar sites={websites} selectedIds={selectedRows} role="manager" status={sf.applied.status || 'Approved'} />
               </div>
               <PaginationControls page={page} totalPages={pagination.totalPages} onPageChange={setPage} pageSize={pageSize} onPageSizeChange={setPageSize} />
             </div>
