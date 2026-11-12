@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Store, Plus, Trash2, Save, RefreshCw } from 'lucide-react';
+import { Store, Plus, Trash2, Save, RefreshCw, IndianRupee, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { adminAPI } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
@@ -171,6 +171,132 @@ export function MarketplacePricing() {
                     </table>
                 </div>
             </div>
+
+            <PaymentSettings />
+        </div>
+    );
+}
+
+/** ₹ rate + top-up fees (India: GST + Razorpay fee; abroad: PayPal platform fee) + which gateways are set up */
+function PaymentSettings() {
+    const { showSuccess, showError } = useToast();
+    const [settings, setSettings] = useState(null);
+    const [form, setForm] = useState({ inr_per_usd: '', razorpay_gst_pct: '', razorpay_fee_pct: '', paypal_fee_pct: '' });
+    const [saving, setSaving] = useState(false);
+
+    const fill = (d) => {
+        setSettings(d);
+        setForm({
+            inr_per_usd: d.inr_per_usd ? String(d.inr_per_usd) : '',
+            razorpay_gst_pct: String(d.fees.razorpay_gst_pct),
+            razorpay_fee_pct: String(d.fees.razorpay_fee_pct),
+            paypal_fee_pct: String(d.fees.paypal_fee_pct)
+        });
+    };
+    useEffect(() => {
+        adminAPI.getMarketplacePaymentSettings().then(fill).catch(err => showError(err.message || 'Failed to load payment settings'));
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const n = (k) => Number(form[k]);
+    const rateOk = n('inr_per_usd') >= 1 && n('inr_per_usd') <= 1000;
+    const pctOk = (k) => form[k] !== '' && n(k) >= 0 && n(k) <= 50;
+    const valid = rateOk && ['razorpay_gst_pct', 'razorpay_fee_pct', 'paypal_fee_pct'].every(pctOk);
+    const dirty = settings && (n('inr_per_usd') !== (settings.inr_per_usd || 0)
+        || ['razorpay_gst_pct', 'razorpay_fee_pct', 'paypal_fee_pct'].some(k => n(k) !== settings.fees[k]));
+
+    const save = async () => {
+        try {
+            setSaving(true);
+            const d = await adminAPI.saveMarketplacePaymentSettings({
+                inr_per_usd: n('inr_per_usd'),
+                fees: { razorpay_gst_pct: n('razorpay_gst_pct'), razorpay_fee_pct: n('razorpay_fee_pct'), paypal_fee_pct: n('paypal_fee_pct') }
+            });
+            showSuccess(d.message);
+            fill(await adminAPI.getMarketplacePaymentSettings());
+        } catch (err) {
+            showError(err.response?.data?.message || err.message || 'Failed to save payment settings');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const Status = ({ ok, children }) => (
+        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${ok ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}{children}
+        </span>
+    );
+    // plain function (not a component) so the input keeps focus while typing
+    const field = (k, label, suffix, width = 'w-28') => (
+        <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
+            <div className="relative w-fit">
+                <input type="number" min="0" step="0.01" value={form[k]} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))}
+                    className={`premium-input ${width} py-2 pr-8 text-sm`} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--text-muted)' }}>{suffix}</span>
+            </div>
+        </div>
+    );
+
+    // Example for $100 – same formula as the storefront
+    const r2 = (x) => Math.round((x + Number.EPSILON) * 100) / 100;
+    const ex = (() => {
+        if (!valid) return null;
+        const base = r2(100 * n('inr_per_usd'));
+        const tax = r2(base * n('razorpay_gst_pct') / 100);
+        const fee = r2((base + tax) * n('razorpay_fee_pct') / 100);
+        const ppFee = r2(100 * n('paypal_fee_pct') / 100);
+        const inr = (v) => `₹${v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        return { india: `${inr(base)} + GST ${inr(tax)} + fee ${inr(fee)} = ${inr(r2(base + tax + fee))}`, abroad: `$100.00 + fee $${ppFee.toFixed(2)} = $${r2(100 + ppFee).toFixed(2)}` };
+    })();
+
+    return (
+        <div className="premium-card p-5">
+            <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                <IndianRupee className="h-5 w-5" style={{ color: 'var(--primary-cyan)' }} /> Payments – rate &amp; fees
+            </h3>
+            <p className="text-sm mt-1 max-w-3xl" style={{ color: 'var(--text-muted)' }}>
+                Clients in <b>India</b> top up with <b>Razorpay in ₹</b>: amount × rate, + GST on the amount, + payment fee on (amount + GST).
+                Clients in <b>other countries</b> top up with <b>PayPal in $</b>: amount + platform fee, no GST.
+                The wallet always gets the $ amount the client chose. Changes apply to new top-ups only.
+            </p>
+            {settings && (
+                <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3">
+                    <Status ok={settings.razorpay.configured}>Razorpay {settings.razorpay.configured ? `keys set (${settings.razorpay.mode} mode)` : 'keys not set'}</Status>
+                    <Status ok={settings.razorpay.webhook}>Webhook secret {settings.razorpay.webhook ? 'set' : 'not set'}</Status>
+                    <Status ok={settings.paypal.configured}>PayPal {settings.paypal.configured ? `set (${settings.paypal.mode})` : 'not set'}</Status>
+                </div>
+            )}
+
+            <div className="grid md:grid-cols-[auto_auto_1fr] gap-4 mt-5 items-end">
+                <div className="rounded-xl border border-[var(--border)] p-4">
+                    <p className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>India – Razorpay</p>
+                    <div className="flex flex-wrap gap-3">
+                        {field('inr_per_usd', '₹ per $1', '₹')}
+                        {field('razorpay_gst_pct', 'GST', '%', 'w-24')}
+                        {field('razorpay_fee_pct', 'Payment fee', '%', 'w-24')}
+                    </div>
+                </div>
+                <div className="rounded-xl border border-[var(--border)] p-4">
+                    <p className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Other countries – PayPal</p>
+                    {field('paypal_fee_pct', 'Platform fee', '%')}
+                </div>
+                <div className="flex md:justify-end">
+                    <button onClick={save} disabled={saving || !valid || !dirty} className="premium-btn premium-btn-primary py-2 disabled:opacity-50">
+                        <Save className="h-4 w-4" />{saving ? 'Saving…' : 'Save payment settings'}
+                    </button>
+                </div>
+            </div>
+
+            {settings && !settings.inr_per_usd && (
+                <p className="text-xs mt-3 font-semibold text-amber-700">No ₹ rate set yet – Indian clients can't top up with Razorpay until you save one.</p>
+            )}
+            {!valid && settings && <p className="text-xs mt-3 font-semibold text-amber-700">Rate must be ₹1–₹1000 and every fee 0–50%.</p>}
+            {ex && (
+                <div className="text-xs mt-3 space-y-0.5" style={{ color: 'var(--text-muted)' }}>
+                    <p>Example, a $100 top-up – <b>India:</b> {ex.india}</p>
+                    <p>Example, a $100 top-up – <b>other countries:</b> {ex.abroad}</p>
+                </div>
+            )}
         </div>
     );
 }

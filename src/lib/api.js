@@ -198,6 +198,8 @@ export const adminAPI = {
   grantMarketplaceClientPro: async (id, note) => (await api.post(`/admin/marketplace/clients/${id}/grant-pro`, { note })).data,
   reactivateMarketplaceClient: async (id, note) => (await api.post(`/admin/marketplace/clients/${id}/reactivate`, { note })).data,
   getMarketplaceFreeSites: async () => (await api.get('/admin/marketplace/free-sites')).data,
+  getMarketplacePaymentSettings: async () => (await api.get('/admin/marketplace/payment-settings')).data,
+  saveMarketplacePaymentSettings: async (body) => (await api.put('/admin/marketplace/payment-settings', body)).data, // { inr_per_usd, fees }
   saveMarketplaceFreeSites: async (domains) => (await api.put('/admin/marketplace/free-sites', { domains })).data,
   saveMarketplacePricing: async (marketplace, rules, kind = 'normal') => {
     const response = await api.put('/admin/marketplace/pricing', { marketplace, rules, kind });
