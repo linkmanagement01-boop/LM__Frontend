@@ -281,6 +281,7 @@ export function MarketplaceClients() {
                                     <td className="px-4 py-3">
                                         <p className="font-semibold text-[var(--text-primary)]">{c.name}</p>
                                         <p className="text-xs text-[var(--text-muted)]">{c.email}</p>
+                                        <p className={`text-xs ${c.country ? 'text-[var(--text-secondary)]' : 'text-amber-700'}`}>{c.country || 'No country yet'}</p>
                                     </td>
                                     <td className="px-4 py-3"><PlanBadge c={c} /></td>
                                     <td className="px-4 py-3 font-semibold text-[var(--text-primary)]">{money(c.balance)}</td>
