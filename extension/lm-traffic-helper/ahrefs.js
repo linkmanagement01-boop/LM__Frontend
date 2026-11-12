@@ -44,7 +44,7 @@
     panel.append(title, body);
     if (withButtons) {
       panel.appendChild(button('Save now', () => send(true)));
-      if (job?.total > 1) panel.appendChild(button('Skip site', () => skip('Skipped'), false));
+      panel.appendChild(button(job?.total > 1 ? 'Skip site' : 'Skip', () => skip('Skipped'), false));
     }
   };
 
@@ -59,9 +59,30 @@
   // ── Captured data → background ──
   const parse = (body) => { try { return JSON.parse(body); } catch { return null; } };
   const isResult = (body) => {
-    if (body.length < 200 || !/traffic/i.test(body)) return false;
+    if (!/traffic/i.test(body)) return false;
     const j = parse(body);
-    return !!j && !(Array.isArray(j) && j[0] === 'Error');
+    if (!j || (Array.isArray(j) && j[0] === 'Error')) return false;
+    if (body.length >= 200) return true;
+    // short answer = a site with no traffic (e.g. ["Ok",{"trafficMonthlyAvg":0,...}]) – still a result
+    const o = Array.isArray(j) && j[0] === 'Ok' ? j[1] : j;
+    return !!o && typeof o === 'object' && Object.keys(o).some(k => /traffic/i.test(k) && typeof o[k] === 'number');
+  };
+
+  // Fallback: the result box is on the page but its answer wasn't captured → read the numbers from the box
+  const toNum = (s) => {
+    const m = String(s || '').replace(/[$,\s]/g, '').match(/^([\d.]+)([KMB]?)$/i);
+    if (!m) return null;
+    return Math.round(parseFloat(m[1]) * ({ K: 1e3, M: 1e6, B: 1e9 }[m[2].toUpperCase()] || 1));
+  };
+  const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pageResult = () => {
+    const text = document.body?.innerText || '';
+    if (!job || !new RegExp('Organic traffic of\\s+(www\\.)?' + escRe(job.domain), 'i').test(text)) return null;
+    const t = text.match(/\nOrganic traffic[^\n]*\n\s*(\d[\d.,]*\s*[KMB]?)\s*(\n|$)/i);
+    const traffic = t ? toNum(t[1]) : null;
+    if (traffic === null) return null;
+    const v = text.match(/\nTraffic value[^\n]*\n\s*(\$?\d[\d.,]*\s*[KMB]?)\s*(\n|$)/i);
+    return { trafficMonthlyAvg: traffic, costMontlyAvg: v ? toNum(v[1]) : null };
   };
 
   const send = (manual = false) => {
@@ -134,11 +155,26 @@
       ? 'Ahrefs wants you to verify you are human. Complete it here – the check continues by itself.'
       : `Ahrefs has not answered yet – showing this tab so it can finish. [${why}]`, 'info', true);
   };
+  // result box shown for 5s without a captured answer → save the numbers shown in the box
+  const watchPageResult = () => {
+    let shownAt = 0;
+    const tick = setInterval(() => {
+      if (sent || captures.length) return clearInterval(tick);
+      const r = pageResult();
+      if (!r) { shownAt = 0; return; }
+      shownAt = shownAt || Date.now();
+      if (Date.now() - shownAt < 5000) return;
+      clearInterval(tick);
+      captures.push({ url: 'page:result-box', body: JSON.stringify(['Ok', r]) });
+      send();
+    }, 1000);
+  };
   const watchForHuman = () => {
     const started = Date.now();
     let seenAt = 0;
     const tick = setInterval(() => {
       if (sent || captures.length || surfaced) return clearInterval(tick);
+      if (pageResult()) { seenAt = 0; return; } // the result is on the page – not a human check
       const kind = challengeShown();
       if (kind) {
         seenAt = seenAt || Date.now();
@@ -155,6 +191,8 @@
     if (captures.length) { clearTimeout(timer); timer = setTimeout(send, SETTLE_MS); }
     setTimeout(autoStart, 4000);
     watchForHuman();
-    if (job.total > 1) timeout = setTimeout(() => skip('Skipped – no result from Ahrefs within 2 minutes'), TIMEOUT_MS);
+    watchPageResult();
+    // single checks too – the card's "Checking…" ends instead of waiting forever
+    timeout = setTimeout(() => skip('Skipped – no result from Ahrefs within 2 minutes'), TIMEOUT_MS);
   }).catch(() => {});
 })();
