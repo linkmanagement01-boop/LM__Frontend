@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Users2, ChevronRight, X, UserPlus } from 'lucide-react';
 import { adminAPI } from '../../lib/api';
 
-const CREATE_ROLES = ['Manager', 'Writer', 'Blogger', 'Team', 'Accountant'];
+const CREATE_ROLES = ['Manager', 'Writer', 'Blogger', 'Team', 'Outreach', 'Accountant'];
+const ROLE_LABEL = { Outreach: 'Outreach Team' }; // what the dropdown shows
 
 export function AddTeamMember() {
     const navigate = useNavigate();
@@ -136,7 +137,7 @@ export function AddTeamMember() {
                             }}
                         >
                             <option value="">Select an option</option>
-                            {CREATE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                            {CREATE_ROLES.map(r => <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>)}
                         </select>
                     </div>
 

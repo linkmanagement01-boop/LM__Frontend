@@ -174,7 +174,22 @@ export const authAPI = {
 // Marketplace outreach requests (sites clients asked for) – role: 'admin' | 'manager'
 export const outreachAPI = {
   list: async (role, params = {}) => (await api.get(`/${role}/marketplace/outreach`, { params })).data,
-  setStatus: async (role, id, status) => (await api.put(`/${role}/marketplace/outreach/${id}`, { status })).data,
+  setStatus: async (role, id, status) => (await api.put(`/${role}/marketplace/outreach/${id}`, { status })).data, // not_possible | requested
+  members: async (role) => (await api.get(`/${role}/marketplace/outreach/members`)).data,
+  assign: async (role, id, userId) => (await api.put(`/${role}/marketplace/outreach/${id}/assign`, { user_id: userId })).data,
+  saveDetails: async (role, id, details) => (await api.put(`/${role}/marketplace/outreach/${id}/details`, { details })).data,
+  approve: async (role, id, details) => (await api.post(`/${role}/marketplace/outreach/${id}/approve`, { details })).data,
+  sendBack: async (role, id, note) => (await api.post(`/${role}/marketplace/outreach/${id}/send-back`, { note })).data,
+};
+
+// Outreach Team panel (a member's own tasks)
+export const outreachTeamAPI = {
+  dashboard: async () => (await api.get('/outreach/dashboard')).data,
+  tasks: async (status = 'todo') => (await api.get('/outreach/tasks', { params: { status } })).data,
+  save: async (id, details) => (await api.put(`/outreach/tasks/${id}`, { details })).data,
+  submit: async (id, details) => (await api.post(`/outreach/tasks/${id}/submit`, { details })).data,
+  notifications: async () => (await api.get('/outreach/notifications')).data,
+  readNotifications: async (id) => (await api.post('/outreach/notifications/read', id ? { id } : {})).data,
 };
 
 export const supportAPI = {

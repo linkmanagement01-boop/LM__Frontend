@@ -6,6 +6,7 @@ import { SignupPage } from './pages/SignupPage';
 import { ChangePasswordRedirect } from './components/ChangePasswordRedirect.jsx';
 import { ManagerRoutes } from './manager/App.jsx';
 import { App as TeamsApp } from './teams/App.jsx';
+import { OutreachApp } from './outreach/App.jsx';
 import { AdminLayout } from './admin/Layout.jsx';
 import { Dashboard as AdminDashboard } from './admin/pages/Dashboard.jsx';
 import { ReportingLayout as AdminReportingLayout } from './admin/pages/reports/ReportingLayout.jsx';
@@ -221,6 +222,7 @@ function App() {
         {/* Dynamic Routes */}
         <Route path="/manager/*" element={<ManagerRoutes />} />
         <Route path="/teams/*" element={<TeamsApp />} />
+        <Route path="/outreach/*" element={<OutreachApp />} />
       </Routes>
     </BrowserRouter>
   );
