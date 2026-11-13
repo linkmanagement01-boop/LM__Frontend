@@ -5,8 +5,10 @@ import { Pagination } from '../../components/Pagination.jsx';
 import { adminAPI } from '../../lib/api';
 import { useAuth } from '../../auth/AuthContext';
 
-const TEAM_ROLES = ['Team', 'Manager', 'Writer', 'Accountant'];
-const CREATE_ROLES = ['Manager', 'Writer', 'Blogger', 'Accountant'];
+const TEAM_ROLES = ['Team', 'Manager', 'Writer', 'Accountant', 'Outreach'];
+const CREATE_ROLES = ['Manager', 'Writer', 'Blogger', 'Team', 'Outreach', 'Accountant'];
+// what the dropdown shows (value stays the role name)
+const ROLE_LABEL = { Outreach: 'Outreach Team' };
 const CLIENT_ROLES = ['Client'];
 
 export function TeamMembers() {
@@ -49,18 +51,20 @@ export function TeamMembers() {
       setLoading(true);
       setError(null);
 
-      const [teamRes, managerRes, writerRes, accountantRes] = await Promise.all([
+      const [teamRes, managerRes, writerRes, accountantRes, outreachRes] = await Promise.all([
         adminAPI.getUsers({ role: 'Team', limit: 100 }),
         adminAPI.getUsers({ role: 'Manager', limit: 100 }),
         adminAPI.getUsers({ role: 'Writer', limit: 100 }),
-        adminAPI.getUsers({ role: 'Accountant', limit: 100 })
+        adminAPI.getUsers({ role: 'Accountant', limit: 100 }),
+        adminAPI.getUsers({ role: 'Outreach', limit: 100 }).catch(() => ({ users: [] })) // Outreach Team
       ]);
 
       const allTeamMembers = [
         ...(teamRes.users || []),
         ...(managerRes.users || []),
         ...(writerRes.users || []),
-        ...(accountantRes.users || [])
+        ...(accountantRes.users || []),
+        ...(outreachRes.users || [])
       ];
 
       setUsers(allTeamMembers);
@@ -202,9 +206,10 @@ export function TeamMembers() {
         Team: '/teams',
         Writer: '/writer',
         Accountant: '/accountant',
-        Client: '/client'
+        Client: '/client',
+        Outreach: '/outreach'
       };
-      
+
       // Wait a moment for context to persist, then forcibly navigate
       setTimeout(() => {
         window.location.href = routeMap[data.user.role] || '/';
@@ -752,7 +757,7 @@ export function TeamMembers() {
                       className="premium-input w-full"
                     >
                       <option value="">Select an option</option>
-                      {CREATE_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                      {CREATE_ROLES.map(r => <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>)}
                     </select>
                   </div>
                 )}

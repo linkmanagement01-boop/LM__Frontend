@@ -38,6 +38,8 @@ export function LoginPage() {
         manager: '/manager',
         Team: '/teams',
         team: '/teams',
+        Outreach: '/outreach', // Outreach Team panel
+        outreach: '/outreach',
         Writer: '/writer',
         writer: '/writer',
         Accountant: '/accountant',
