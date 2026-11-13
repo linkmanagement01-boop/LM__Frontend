@@ -171,6 +171,12 @@ export const authAPI = {
 // ==================== Admin APIs ====================
 
 // Marketplace support chat (managers + admins share one inbox)
+// Marketplace outreach requests (sites clients asked for) – role: 'admin' | 'manager'
+export const outreachAPI = {
+  list: async (role, params = {}) => (await api.get(`/${role}/marketplace/outreach`, { params })).data,
+  setStatus: async (role, id, status) => (await api.put(`/${role}/marketplace/outreach/${id}`, { status })).data,
+};
+
 export const supportAPI = {
   conversations: async (params = {}) => (await api.get('/support/conversations', { params })).data,
   conversation: async (id) => (await api.get(`/support/conversations/${id}`)).data,

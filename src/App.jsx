@@ -15,6 +15,7 @@ import { PriceCharts as AdminPriceCharts } from './admin/pages/PriceCharts.jsx';
 import { MarketplacePricing as AdminMarketplacePricing } from './admin/pages/MarketplacePricing.jsx';
 import { MarketplaceClients as AdminMarketplaceClients } from './admin/pages/MarketplaceClients.jsx';
 import { ClientMessagesView as AdminClientMessages } from './manager/pages/ClientMessages.jsx';
+import { OutreachRequestsView as AdminOutreachRequests } from './manager/pages/OutreachRequests.jsx';
 import { Bloggers as AdminBloggers } from './admin/pages/Bloggers.jsx';
 import { BloggerPerformance as AdminBloggerPerformance } from './admin/pages/BloggerPerformance.jsx';
 import { TeamMembers as AdminTeamMembers } from './admin/pages/TeamMembers.jsx';
@@ -116,6 +117,7 @@ function App() {
           <Route path="marketplace-pricing" element={<AdminMarketplacePricing />} />
           <Route path="marketplace-clients" element={<AdminMarketplaceClients />} />
           <Route path="client-messages" element={<AdminClientMessages />} />
+          <Route path="marketplace-outreach" element={<AdminOutreachRequests role="admin" />} />
           <Route path="team-members" element={<AdminTeamMembers />} />
           <Route path="team-members/add" element={<AddTeamMember />} />
           <Route path="users/:id/permissions" element={<AdminUserPermissions />} />

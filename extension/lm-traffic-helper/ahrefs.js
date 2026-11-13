@@ -58,8 +58,13 @@
 
   // ── Captured data → background ──
   const parse = (body) => { try { return JSON.parse(body); } catch { return null; } };
-  const isResult = (body) => {
-    if (!/traffic/i.test(body)) return false;
+  // Only the page's traffic calls (e.g. /v4/stGetFreeTrafficOverview) – Ahrefs also loads other data on this page
+  // (e.g. /v4/stGetPricing, 50 KB that mentions "traffic"), which must never be taken for the result
+  const isTrafficCall = (url) => {
+    try { return /traffic/i.test(new URL(url, location.href).pathname); } catch { return false; }
+  };
+  const isResult = (body, url) => {
+    if (!isTrafficCall(url) || !/traffic/i.test(body)) return false;
     const j = parse(body);
     if (!j || (Array.isArray(j) && j[0] === 'Error')) return false;
     if (body.length >= 200) return true;
@@ -111,7 +116,7 @@
         .catch(() => {});
       return;
     }
-    if (!body || !isResult(body)) return;
+    if (!body || !isResult(body, url)) return;
     captures.push({ url, body });
     if (captures.length > 20) captures.shift();
     if (!job) return; // job lookup still running – send() is called once it's known
