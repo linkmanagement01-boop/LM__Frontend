@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../components/ModernSidebar';
-import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal, Store, Crown } from 'lucide-react';
+import { LayoutGrid, TrendingUp, ShoppingCart, BarChart3, Users, Users2, Globe, Wallet, MoreHorizontal, Store, Crown, Radar } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { useTrafficSuggestionCount } from '../components/TrafficSuggestions';
 
@@ -41,7 +41,8 @@ export function AdminLayout() {
     ...(import.meta.env.VITE_MARKETPLACE_ENABLED === 'true'
       ? [{ icon: <Store size={20} />, label: 'Marketplace Pricing', to: '/admin/marketplace-pricing', active: pathname.startsWith('/admin/marketplace-pricing') },
         { icon: <Crown size={20} />, label: 'Marketplace Clients', to: '/admin/marketplace-clients', active: pathname.startsWith('/admin/marketplace-clients') },
-        { icon: <Store size={20} />, label: 'Client Messages', to: '/admin/client-messages', active: pathname.startsWith('/admin/client-messages') }]
+        { icon: <Store size={20} />, label: 'Client Messages', to: '/admin/client-messages', active: pathname.startsWith('/admin/client-messages') },
+        { icon: <Radar size={20} />, label: 'Outreach Requests', to: '/admin/marketplace-outreach', active: pathname.startsWith('/admin/marketplace-outreach') }]
       : []),
     { icon: <Users2 size={20} />, label: 'Team Members', to: '/admin/team-members', active: pathname.startsWith('/admin/team-members') },
     {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ModernSidebar } from '../../../components/ModernSidebar'; // Adjust path as needed, likely ../../../components/ModernSidebar
-import { Home, Package, Clock, AlertTriangle, MessageSquare, Globe, User, Users, MessagesSquare } from 'lucide-react';
+import { Home, Package, Clock, AlertTriangle, MessageSquare, Globe, User, Users, MessagesSquare, Radar } from 'lucide-react';
 import { supportAPI } from '../../../lib/api';
 import { useTrafficSuggestionCount } from '../../../components/TrafficSuggestions';
 
@@ -131,6 +131,13 @@ export const Layout = ({ children }) => {
       ),
       to: '/manager/client-messages',
       active: location.pathname === '/manager/client-messages',
+      permissionKey: null
+    }, {
+      // sites marketplace clients asked us to get, with their budget
+      icon: <Radar size={18} />,
+      label: 'Outreach Requests',
+      to: '/manager/outreach-requests',
+      active: location.pathname === '/manager/outreach-requests',
       permissionKey: null
     }] : []),
     {

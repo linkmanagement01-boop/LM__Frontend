@@ -17,6 +17,7 @@ import { RejectedBloggers } from './pages/rejected/Bloggers.jsx';
 import { RejectedWriters } from './pages/rejected/Writers.jsx';
 import { Threads } from './pages/Threads.jsx';
 import { ClientMessages } from './pages/ClientMessages.jsx';
+import { OutreachRequests } from './pages/OutreachRequests.jsx';
 import { Sites } from './pages/Sites.jsx';
 import { LinkCompleted } from './pages/sites/LinkCompleted.jsx';
 import { SiteSuggestions } from './pages/sites/SiteSuggestions.jsx';
@@ -53,6 +54,7 @@ export function ManagerRoutes() {
       {/* Threads & Sites */}
       <Route path="threads" element={<Threads />} />
       <Route path="client-messages" element={<ClientMessages />} />
+      <Route path="outreach-requests" element={<OutreachRequests />} />
       <Route path="sites" element={<Sites />} />
       <Route path="sites/suggestions" element={<SiteSuggestions />} />
       <Route path="sites/link-completed" element={<LinkCompleted />} />
