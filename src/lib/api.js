@@ -236,6 +236,10 @@ export const adminAPI = {
     const response = await api.get('/admin/bloggers-stats', { params });
     return response.data;
   },
+  // Bloggers clean-up: all matching ids (same filters as the list), bulk deactivate, bulk safe delete (≤200 per call)
+  getBloggerIds: async (params = {}) => (await api.get('/admin/bloggers/ids', { params, timeout: 120000 })).data,
+  bulkBloggerStatus: async (ids, status) => (await api.post('/admin/bloggers/bulk-status', { ids, status }, { timeout: 120000 })).data,
+  bulkDeleteBloggers: async (ids) => (await api.post('/admin/bloggers/bulk-delete', { ids }, { timeout: 300000 })).data,
   getBloggerPerformance: async (id) => {
     const response = await api.get(`/admin/bloggers/${id}/performance`);
     return response.data;
