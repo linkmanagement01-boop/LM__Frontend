@@ -1,10 +1,31 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, Users, Lock, BarChart2, SlidersHorizontal, X, LogIn, Trash2 } from 'lucide-react';
+import { RefreshCw, Users, Lock, BarChart2, SlidersHorizontal, X, LogIn, Trash2, Sparkles, Ban, Loader2, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination.jsx';
 import { adminAPI } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../auth/AuthContext';
+
+// Filters: name / email / wallet + clean-up filters to find junk accounts
+const EMPTY_FILTERS = {
+  name: '', email: '', walletMin: '', walletMax: '',
+  no_sites: false, older_than_days: '', no_orders: false, no_login_days: '', never_logged_in: false, account_status: ''
+};
+/** Filters → query params (only the ones that are set) – same params for the list and "select all matching" */
+const filterParams = (f) => {
+  const p = {};
+  if (f.name) p.name = f.name;
+  if (f.email) p.email = f.email;
+  if (f.walletMin) p.walletMin = f.walletMin;
+  if (f.walletMax) p.walletMax = f.walletMax;
+  if (f.no_sites) p.no_sites = '1';
+  if (f.older_than_days) p.older_than_days = f.older_than_days;
+  if (f.no_orders) p.no_orders = '1';
+  if (f.no_login_days) p.no_login_days = f.no_login_days;
+  if (f.never_logged_in) p.never_logged_in = '1';
+  if (f.account_status) p.account_status = f.account_status;
+  return p;
+};
 
 export function Bloggers() {
   const navigate = useNavigate();
@@ -19,12 +40,11 @@ export function Bloggers() {
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    name: '',
-    email: '',
-    walletMin: '',
-    walletMax: ''
-  });
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // Bulk selection (ids across pages) + the running bulk job
+  const [selected, setSelected] = useState(() => new Set());
+  const [selectingAll, setSelectingAll] = useState(false);
+  const [bulk, setBulk] = useState(null); // { kind: 'delete'|'deactivate', step: 'confirm'|'running'|'done', done, total, deleted, skipped: [] }
 
   // Debounce timer ref
   const debounceTimer = useRef(null);
@@ -41,11 +61,8 @@ export function Bloggers() {
         limit: currentPageSize,
       };
 
-      // Add filters if they have values
-      if (currentFilters.name) params.name = currentFilters.name;
-      if (currentFilters.email) params.email = currentFilters.email;
-      if (currentFilters.walletMin) params.walletMin = currentFilters.walletMin;
-      if (currentFilters.walletMax) params.walletMax = currentFilters.walletMax;
+      // Add filters if they have values (incl. the clean-up filters)
+      Object.assign(params, filterParams(currentFilters));
 
       const response = await adminAPI.getBloggerStats(params);
       setUsers(response.users || []);
@@ -73,6 +90,7 @@ export function Bloggers() {
     // Set new timer for filter changes
     debounceTimer.current = setTimeout(() => {
       setPage(1); // Reset to first page when filters change
+      setSelected(new Set()); // a selection belongs to the filters it was made with
       fetchUsers(1, pageSize, filters);
     }, 500); // 500ms debounce
 
@@ -186,11 +204,58 @@ export function Bloggers() {
 
   // Clear all filters
   const clearFilters = () => {
-    setFilters({ name: '', email: '', walletMin: '', walletMax: '' });
+    setFilters(EMPTY_FILTERS);
   };
 
   // Check if any filter is active
-  const hasActiveFilters = filters.name || filters.email || filters.walletMin || filters.walletMax;
+  const hasActiveFilters = Object.keys(filterParams(filters)).length > 0;
+
+  // ── Bulk selection & actions ──
+  const toggleOne = (id) => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const pageIds = users.map(u => Number(u.id));
+  const pageAllSelected = pageIds.length > 0 && pageIds.every(id => selected.has(id));
+  const togglePage = () => setSelected(s => { const n = new Set(s); pageIds.forEach(id => (pageAllSelected ? n.delete(id) : n.add(id))); return n; });
+  const selectAllMatching = async () => {
+    try {
+      setSelectingAll(true);
+      const d = await adminAPI.getBloggerIds(filterParams(filters));
+      setSelected(new Set(d.ids));
+      showSuccess(`${d.total.toLocaleString()} bloggers selected`);
+    } catch (err) {
+      showError(err.response?.data?.message || err.message || 'Could not select all');
+    } finally {
+      setSelectingAll(false);
+    }
+  };
+  const runBulk = async (kind) => {
+    const ids = [...selected];
+    const BATCH = kind === 'delete' ? 100 : 5000;
+    const job = { kind, step: 'running', done: 0, total: ids.length, deleted: 0, skipped: [] };
+    setBulk({ ...job });
+    try {
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const part = ids.slice(i, i + BATCH);
+        if (kind === 'delete') {
+          const d = await adminAPI.bulkDeleteBloggers(part);
+          job.deleted += d.deleted || 0;
+          job.skipped.push(...(d.skipped || []));
+        } else {
+          const d = await adminAPI.bulkBloggerStatus(part, 0);
+          job.deleted += d.updated || 0;
+        }
+        job.done = Math.min(ids.length, i + BATCH);
+        setBulk({ ...job });
+      }
+      job.step = 'done';
+    } catch (err) {
+      job.step = 'done';
+      job.error = err.response?.data?.message || err.message || 'Stopped with an error';
+    }
+    setBulk({ ...job });
+    setSelected(new Set());
+    fetchUsers(1, pageSize, filters);
+    setPage(1);
+  };
 
   // Handle page change
   const handlePageChange = (newPage) => {
@@ -247,7 +312,7 @@ export function Bloggers() {
 
       {/* Collapsible Filters Panel */}
       <div
-        className={`overflow-hidden transition-all duration-500 ease-in-out ${showFilters ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${showFilters ? 'max-h-[1100px] opacity-100' : 'max-h-0 opacity-0'
           }`}
       >
         <div
@@ -349,6 +414,49 @@ export function Bloggers() {
             </div>
           </div>
 
+          {/* Clean-up filters: find junk accounts */}
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Clean-up filters – find junk accounts</h4>
+              <button type="button"
+                onClick={() => setFilters(f => ({ ...f, no_sites: true, no_orders: true, older_than_days: '30' }))}
+                className="text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 font-semibold"
+                style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)', color: 'var(--primary-cyan)', border: '1px solid rgba(124, 58, 237, 0.25)' }}
+                title="No sites, no orders, account older than 30 days">
+                <Sparkles size={13} /> Junk accounts preset
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                ['no_sites', 'No sites added', 'None added by them and none uploaded under their email'],
+                ['no_orders', 'No orders ever', 'Never got a single order line'],
+                ['never_logged_in', 'Never logged in', 'No login recorded'],
+              ].map(([k, label, hint]) => (
+                <label key={k} className="flex items-start gap-2.5 rounded-xl px-3 py-2.5 cursor-pointer" style={{ backgroundColor: 'var(--background-dark)', border: `1px solid ${filters[k] ? 'var(--primary-cyan)' : 'var(--border)'}` }}>
+                  <input type="checkbox" checked={!!filters[k]} onChange={e => setFilters(f => ({ ...f, [k]: e.target.checked }))} className="mt-0.5 h-4 w-4 accent-[var(--primary-cyan)]" />
+                  <span><span className="block text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{label}</span><span className="block text-[11px]" style={{ color: 'var(--text-muted)' }}>{hint}</span></span>
+                </label>
+              ))}
+              {[
+                ['older_than_days', 'Account older than', [['', 'Any age'], ['30', '1 month'], ['60', '2 months'], ['90', '3 months'], ['180', '6 months'], ['365', '1 year']]],
+                ['no_login_days', 'Not logged in for', [['', 'Any'], ['30', '1 month'], ['60', '2 months'], ['90', '3 months'], ['180', '6 months']]],
+                ['account_status', 'Account status', [['', 'Active & inactive'], ['active', 'Active only'], ['inactive', 'Inactive only']]],
+              ].map(([k, label, opts]) => (
+                <div key={k} className="space-y-1.5">
+                  <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{label}</label>
+                  <select value={filters[k]} onChange={e => setFilters(f => ({ ...f, [k]: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                    style={{ backgroundColor: 'var(--background-dark)', color: 'var(--text-primary)', border: `1px solid ${filters[k] ? 'var(--primary-cyan)' : 'var(--border)'}` }}>
+                    {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] mt-2.5" style={{ color: 'var(--text-muted)' }}>
+              Login dates were only recorded recently, so most old accounts show no login – use "Not logged in" / "Never logged in" together with "No sites" and "No orders", not on their own.
+            </p>
+          </div>
+
           {/* Active filters summary */}
           {hasActiveFilters && (
             <div className="mt-4 pt-3 border-t flex items-center gap-2 flex-wrap" style={{ borderColor: 'var(--border)' }}>
@@ -373,6 +481,16 @@ export function Bloggers() {
                   Max: {filters.walletMax}
                 </span>
               )}
+              {[
+                filters.no_sites && 'No sites',
+                filters.no_orders && 'No orders',
+                filters.never_logged_in && 'Never logged in',
+                filters.older_than_days && `Older than ${filters.older_than_days} days`,
+                filters.no_login_days && `No login for ${filters.no_login_days} days`,
+                filters.account_status && (filters.account_status === 'active' ? 'Active only' : 'Inactive only')
+              ].filter(Boolean).map(t => (
+                <span key={t} className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)', color: 'var(--primary-cyan)' }}>{t}</span>
+              ))}
             </div>
           )}
         </div>
@@ -389,15 +507,102 @@ export function Bloggers() {
         </div>
       )}
 
-      {/* Results Count Bar */}
-      <div className="flex items-center justify-between px-1">
+      {/* Results Count Bar + bulk selection */}
+      <div className="flex items-center justify-between flex-wrap gap-3 px-1">
         <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
           Showing <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{users.length}</span> of <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{total.toLocaleString()}</span> bloggers
           {hasActiveFilters && (
             <span style={{ color: 'var(--primary-cyan)' }}> (filtered)</span>
           )}
+          {total > 0 && selected.size < total && (
+            <button onClick={selectAllMatching} disabled={selectingAll} className="ml-3 text-sm font-semibold hover:underline disabled:opacity-60" style={{ color: 'var(--primary-cyan)' }}>
+              {selectingAll ? 'Selecting…' : `Select all ${total.toLocaleString()} matching`}
+            </button>
+          )}
         </div>
+        {selected.size > 0 && (
+          <div className="flex items-center gap-2 flex-wrap rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(124, 58, 237, 0.08)', border: '1px solid rgba(124, 58, 237, 0.25)' }}>
+            <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{selected.size.toLocaleString()} selected</span>
+            <button onClick={() => setSelected(new Set())} className="text-xs font-semibold hover:underline" style={{ color: 'var(--text-muted)' }}>Clear</button>
+            <button onClick={() => setBulk({ kind: 'deactivate', step: 'confirm' })} className="text-sm px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5"
+              style={{ backgroundColor: 'var(--card-background)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
+              <Ban size={14} /> Deactivate
+            </button>
+            <button onClick={() => setBulk({ kind: 'delete', step: 'confirm', typed: '' })} className="text-sm px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5 text-white bg-red-600 hover:bg-red-700">
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Bulk action pop-up: confirm → progress → result */}
+      {bulk && (
+        <div className="fixed inset-0 z-50 bg-black/50 grid place-items-center p-4" onMouseDown={() => bulk.step !== 'running' && setBulk(null)}>
+          <div onMouseDown={e => e.stopPropagation()} className="w-full max-w-lg rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: 'var(--card-background)', border: '1px solid var(--border)' }}>
+            {bulk.step === 'confirm' && (
+              <>
+                <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                  {bulk.kind === 'delete' ? <><AlertTriangle className="h-5 w-5 text-red-500" /> Delete {selected.size.toLocaleString()} bloggers?</> : <><Ban className="h-5 w-5" /> Deactivate {selected.size.toLocaleString()} bloggers?</>}
+                </h3>
+                {bulk.kind === 'delete' ? (
+                  <div className="mt-3 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <p>This <b>permanently deletes</b> these accounts – it can't be undone.</p>
+                    <p>Every blogger is checked first: anyone with orders, wallet money, payouts or sites used in orders is <b>skipped</b> and listed, never deleted.</p>
+                    <label className="block pt-2 text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Type DELETE to confirm</label>
+                    <input autoFocus value={bulk.typed || ''} onChange={e => setBulk(b => ({ ...b, typed: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl text-sm outline-none" style={{ backgroundColor: 'var(--background-dark)', color: 'var(--text-primary)', border: '1px solid var(--border)' }} />
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm" style={{ color: 'var(--text-secondary)' }}>They won't be able to log in and their sites stay hidden. You can switch any of them back on later.</p>
+                )}
+                <div className="mt-6 flex justify-end gap-2">
+                  <button onClick={() => setBulk(null)} className="px-4 py-2 rounded-lg text-sm font-semibold" style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>Cancel</button>
+                  <button disabled={bulk.kind === 'delete' && bulk.typed !== 'DELETE'} onClick={() => runBulk(bulk.kind)}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-40 ${bulk.kind === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-700 hover:bg-slate-800'}`}>
+                    {bulk.kind === 'delete' ? 'Delete permanently' : 'Deactivate'}
+                  </button>
+                </div>
+              </>
+            )}
+            {bulk.step === 'running' && (
+              <>
+                <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}><Loader2 className="h-5 w-5 animate-spin" /> {bulk.kind === 'delete' ? 'Deleting…' : 'Deactivating…'}</h3>
+                <div className="mt-4 h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--background-dark)' }}>
+                  <div className="h-full bg-[var(--primary-cyan)] transition-all" style={{ width: `${bulk.total ? Math.round((bulk.done / bulk.total) * 100) : 0}%` }} />
+                </div>
+                <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {bulk.done.toLocaleString()} of {bulk.total.toLocaleString()} checked · {bulk.deleted.toLocaleString()} {bulk.kind === 'delete' ? 'deleted' : 'deactivated'}{bulk.kind === 'delete' ? ` · ${bulk.skipped.length} skipped` : ''}
+                </p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>Keep this tab open until it finishes.</p>
+              </>
+            )}
+            {bulk.step === 'done' && (
+              <>
+                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{bulk.error ? 'Stopped' : 'Done'}</h3>
+                <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  <b>{bulk.deleted.toLocaleString()}</b> blogger{bulk.deleted === 1 ? '' : 's'} {bulk.kind === 'delete' ? 'deleted' : 'deactivated'}
+                  {bulk.kind === 'delete' && <> · <b>{bulk.skipped.length}</b> skipped</>} (of {bulk.done.toLocaleString()} checked).
+                </p>
+                {bulk.error && <p className="mt-2 text-sm text-red-500">{bulk.error} – the rest were not touched; you can run it again.</p>}
+                {bulk.skipped.length > 0 && (
+                  <div className="mt-3 max-h-56 overflow-y-auto rounded-lg text-xs" style={{ border: '1px solid var(--border)' }}>
+                    {bulk.skipped.slice(0, 100).map(s => (
+                      <div key={s.id} className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                        <b style={{ color: 'var(--text-primary)' }}>{s.name || 'Blogger'}</b> <span style={{ color: 'var(--text-muted)' }}>{s.email}</span>
+                        <div style={{ color: 'var(--text-secondary)' }}>{s.reason}</div>
+                      </div>
+                    ))}
+                    {bulk.skipped.length > 100 && <div className="px-3 py-2" style={{ color: 'var(--text-muted)' }}>…and {bulk.skipped.length - 100} more</div>}
+                  </div>
+                )}
+                <div className="mt-5 flex justify-end">
+                  <button onClick={() => setBulk(null)} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[var(--primary-cyan)]">Close</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Loading State */}
       {loading && users.length === 0 && (
@@ -414,6 +619,9 @@ export function Bloggers() {
             <table className="w-full">
               <thead style={{ backgroundColor: 'var(--background-dark)' }}>
                 <tr>
+                  <th className="pl-6 pr-2 py-4 w-8">
+                    <input type="checkbox" checked={pageAllSelected} onChange={togglePage} title="Select this page" className="h-4 w-4 accent-[var(--primary-cyan)] cursor-pointer" />
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Name</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Email</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Account Status</th>
@@ -428,7 +636,10 @@ export function Bloggers() {
               </thead>
               <tbody style={{ backgroundColor: 'var(--card-background)' }}>
                 {users.map((b) => (
-                  <tr key={b.id} className="hover:bg-white/5 transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <tr key={b.id} className="hover:bg-white/5 transition-colors" style={{ borderBottom: '1px solid var(--border)', backgroundColor: selected.has(Number(b.id)) ? 'rgba(124, 58, 237, 0.06)' : undefined }}>
+                    <td className="pl-6 pr-2 py-4">
+                      <input type="checkbox" checked={selected.has(Number(b.id))} onChange={() => toggleOne(Number(b.id))} className="h-4 w-4 accent-[var(--primary-cyan)] cursor-pointer" />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{b.name || 'N/A'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text-secondary)' }}>{b.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -520,7 +731,7 @@ export function Bloggers() {
                 ))}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center" style={{ color: 'var(--text-muted)' }}>
+                    <td colSpan={11} className="px-6 py-12 text-center" style={{ color: 'var(--text-muted)' }}>
                       No bloggers found matching your filters.
                     </td>
                   </tr>

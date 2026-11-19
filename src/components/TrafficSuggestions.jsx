@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Lightbulb, Ban, RefreshCw, CheckCircle2, XCircle, Undo2, Info } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Lightbulb, Ban, RefreshCw, CheckCircle2, XCircle, Undo2, Info, AlertTriangle, ChevronDown } from 'lucide-react';
 import api from '../lib/api';
 import { AhrefsStrip, GrowthPill, Sparkline, trafficRowFields, notifySuggestionsChanged, SUGGESTIONS_CHANGED } from './SiteTraffic';
 
@@ -221,10 +221,105 @@ function SuggestionCard({ site, role, tab, busy, onDecide, onRechecked }) {
         <div className="rounded-lg px-3 py-2 border border-dashed border-brand/25 bg-brand/[0.03]">
           <AhrefsStrip site={site} role={role} onSaved={(t) => onRechecked(site.id, t)} />
         </div>
+        <HistoryChecks site={site} role={role} />
         <div className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
           {suggested ? `Suggested ${when} – traffic 500+ and growing.` : `Rejected automatically ${when} – Ahrefs traffic was 200 or less.`}
         </div>
       </div>
+    </div>
+  );
+}
+
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+const STATUS_CLS = {
+  Approved: 'border-green-500/30 text-green-600 bg-green-500/10', Rejected: 'border-red-500/30 text-red-500 bg-red-500/10',
+  Pending: 'border-yellow-500/30 text-yellow-600 bg-yellow-500/10', Deleted: 'border-slate-400/30 text-slate-500 bg-slate-500/10'
+};
+const money = (v) => (v === null || v === undefined || v === '' ? '—' : `$${String(v).replace(/\$/g, '')}`);
+
+/**
+ * "Before you decide": the same domain elsewhere in Sites, and past order lines on it that were rejected
+ * (by a manager or refused by the blogger) – so nobody has to search Rejected Orders by hand.
+ */
+function HistoryChecks({ site, role }) {
+  const dups = site.duplicates || [];
+  const rej = site.rejected_orders || [];
+  const total = site.rejected_orders_total ?? rej.length;
+  const [open, setOpen] = useState({ dups: dups.length > 0, rej: rej.length > 0 });
+  if (!site.duplicates && !site.rejected_orders) return null;
+  const pill = (key, n, okText, warnText) => (
+    <button type="button" onClick={() => n && setOpen(o => ({ ...o, [key]: !o[key] }))}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${n ? 'border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/15' : 'border-green-500/30 bg-green-500/10 text-green-700 cursor-default'}`}>
+      {n ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+      {n ? `${warnText} (${n})` : okText}
+      {n > 0 && <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open[key] ? 'rotate-180' : ''}`} />}
+    </button>
+  );
+  const head = 'text-left text-[10px] uppercase tracking-wider font-bold px-3 py-2';
+  const cell = 'px-3 py-2 align-top';
+  return (
+    <div className="mt-2 rounded-lg border border-[var(--border)] px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider mr-1" style={{ color: 'var(--text-muted)' }}>Before you decide</span>
+        {pill('dups', dups.length, 'No duplicates', 'Same domain in Sites')}
+        {pill('rej', total, 'No rejected orders', 'Rejected orders')}
+      </div>
+
+      {open.dups && dups.length > 0 && (
+        <div className="mt-2.5 overflow-x-auto rounded-md border border-[var(--border)]">
+          <table className="w-full text-xs">
+            <thead style={{ color: 'var(--text-muted)', background: 'var(--surface-muted)' }}>
+              <tr><th className={head}>Site</th><th className={head}>Status</th><th className={head}>GP / NE</th><th className={head}>Blogger</th><th className={head}>Ahrefs</th><th className={head}>Added</th></tr>
+            </thead>
+            <tbody>
+              {dups.map(d => (
+                <tr key={d.id} className="border-t border-[var(--border)]">
+                  <td className={cell}><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{d.root_domain}</span> <span style={{ color: 'var(--text-muted)' }}>#{d.id}</span></td>
+                  <td className={cell}><span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${STATUS_CLS[d.status] || ''}`}>{d.status}</span></td>
+                  <td className={cell} style={{ color: 'var(--text-secondary)' }}>{money(d.gp_price)} / {money(d.niche_edit_price)}</td>
+                  <td className={cell} style={{ color: 'var(--text-secondary)' }}>{d.blogger_name || '—'}<div style={{ color: 'var(--text-muted)' }}>{d.blogger_email || d.email || ''}</div></td>
+                  <td className={cell} style={{ color: 'var(--text-secondary)' }}>{d.ahrefs_traffic !== null && d.ahrefs_traffic !== undefined ? Number(d.ahrefs_traffic).toLocaleString() : 'not checked'}</td>
+                  <td className={cell} style={{ color: 'var(--text-secondary)' }}>{fmtDate(d.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {dups.some(d => d.status === 'Approved') && (
+            <p className="px-3 py-2 text-[11px] border-t border-[var(--border)] text-amber-700 bg-amber-500/5">
+              An approved copy of this domain already exists – making this one active would list the domain twice.
+            </p>
+          )}
+        </div>
+      )}
+
+      {open.rej && rej.length > 0 && (
+        <div className="mt-2.5 overflow-x-auto rounded-md border border-[var(--border)]">
+          <table className="w-full text-xs">
+            <thead style={{ color: 'var(--text-muted)', background: 'var(--surface-muted)' }}>
+              <tr><th className={head}>Order</th><th className={head}>Rejected by</th><th className={head}>Reason</th><th className={head}>Blogger</th><th className={head}>Date</th></tr>
+            </thead>
+            <tbody>
+              {rej.map(r => (
+                <tr key={r.line_id} className="border-t border-[var(--border)]">
+                  <td className={cell}>
+                    <Link to={`/${role}/orders/${r.order_pk}`} className="font-semibold hover:underline" style={{ color: 'var(--primary-cyan)' }}>#{r.order_id}</Link>
+                    {!r.same_site && <div style={{ color: 'var(--text-muted)' }}>on copy #{r.site_id}</div>}
+                  </td>
+                  <td className={cell}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${r.by === 'blogger' ? 'border-orange-500/30 text-orange-600 bg-orange-500/10' : 'border-red-500/30 text-red-500 bg-red-500/10'}`}>
+                      {r.by === 'blogger' ? 'Blogger refused' : 'Manager rejected'}
+                    </span>
+                  </td>
+                  <td className={`${cell} max-w-xs`} style={{ color: 'var(--text-secondary)' }}>{r.reason || '—'}</td>
+                  <td className={cell} style={{ color: 'var(--text-secondary)' }}>{r.blogger_name || '—'}<div style={{ color: 'var(--text-muted)' }}>{r.blogger_email || ''}</div></td>
+                  <td className={cell} style={{ color: 'var(--text-secondary)' }}>{fmtDate(r.date)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {total > rej.length && <p className="px-3 py-2 text-[11px] border-t border-[var(--border)]" style={{ color: 'var(--text-muted)' }}>Showing the latest {rej.length} of {total}.</p>}
+        </div>
+      )}
     </div>
   );
 }

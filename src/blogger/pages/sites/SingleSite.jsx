@@ -69,6 +69,22 @@ const COUNTRY_OPTIONS = [
   { value: 'Austria', label: 'Austria' }
 ];
 
+/**
+ * Root domain must be just the domain – "abc.com", "my-blog.co.uk".
+ * Returns what's wrong (shown under the field), or '' when it's fine. Same rule as the server.
+ */
+export const domainProblem = (raw) => {
+  const v = String(raw || '').trim();
+  if (!v) return '';
+  if (/:\/\//.test(v) || /^https?:/i.test(v)) return 'Remove http:// or https:// – enter only the domain, e.g. abc.com';
+  if (/^www\./i.test(v)) return 'Remove "www." – enter only the domain, e.g. abc.com';
+  if (/[/?#]/.test(v)) return 'Remove everything after the domain (/page, ?…) – enter only the domain, e.g. abc.com';
+  if (/\s/.test(v)) return 'The domain can\'t contain spaces';
+  if (v !== v.toLowerCase()) return 'Use lowercase letters only, e.g. abc.com';
+  if (!/^([a-z0-9](-*[a-z0-9])*)(\.[a-z0-9](-*[a-z0-9])*)*\.[a-z]{2,}$/.test(v)) return 'This doesn\'t look like a domain – enter it like abc.com';
+  return '';
+};
+
 export function SingleSite() {
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
@@ -105,13 +121,18 @@ export function SingleSite() {
       showError('Please fill all required fields: ' + emptyFields.join(', '));
       return;
     }
+    const badDomain = domainProblem(form.root_domain);
+    if (badDomain) {
+      showError(badDomain);
+      return;
+    }
 
     try {
       setLoading(true);
 
       // Map form fields to backend API format
       const payload = {
-        root_domain: form.root_domain,
+        root_domain: form.root_domain.trim(),
         niche: form.category,
         traffic_source: form.traffic_source,
         spam_score: parseInt(form.spam_score) || 0,
@@ -157,7 +178,12 @@ export function SingleSite() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <Label>Root domain</Label>
-              <input value={form.root_domain} onChange={onChange('root_domain')} required placeholder="example.com" className="w-full rounded-xl px-3 py-2" style={{ backgroundColor: 'var(--background-dark)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+              <input value={form.root_domain} onChange={onChange('root_domain')} required placeholder="example.com" aria-invalid={!!domainProblem(form.root_domain)}
+                className="w-full rounded-xl px-3 py-2"
+                style={{ backgroundColor: 'var(--background-dark)', border: `1px solid ${domainProblem(form.root_domain) ? '#EF4444' : 'var(--border)'}`, color: 'var(--text-primary)' }} />
+              {domainProblem(form.root_domain)
+                ? <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{domainProblem(form.root_domain)}</p>
+                : <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Only the domain, e.g. abc.com – no http://, https://, www. or /page</p>}
             </div>
             <div>
               <Label>Category</Label>
