@@ -172,6 +172,11 @@ export const authAPI = {
 
 // Marketplace support chat (managers + admins share one inbox)
 // Marketplace outreach requests (sites clients asked for) – role: 'admin' | 'manager'
+// Contact Finder (admin) – public e-mails + social profiles of one website (nothing saved)
+export const contactFinderAPI = {
+  check: async (domain) => (await api.post('/admin/contact-finder/check', { domain }, { timeout: 120000 })).data.result,
+};
+
 export const outreachAPI = {
   list: async (role, params = {}) => (await api.get(`/${role}/marketplace/outreach`, { params })).data,
   setStatus: async (role, id, status) => (await api.put(`/${role}/marketplace/outreach/${id}`, { status })).data, // not_possible | requested

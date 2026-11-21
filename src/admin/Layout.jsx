@@ -58,7 +58,8 @@ export function AdminLayout() {
         { label: 'Link Completed', to: '/admin/sites/link-completed' },
         { label: 'Sites', to: '/admin/sites' },
         { label: 'Suggestions', to: '/admin/sites/suggestions', badge: suggestionCount },
-        { label: 'Traffic Lookup', to: '/admin/sites/traffic-lookup' }
+        { label: 'Traffic Lookup', to: '/admin/sites/traffic-lookup' },
+        { label: 'Contact Finder', to: '/admin/sites/contact-finder' }
       ]
     },
     {

@@ -30,6 +30,7 @@ import { ChangePassword as WriterChangePassword } from './writer/pages/ChangePas
 import { LinkCompleted } from './admin/pages/sites/LinkCompleted.jsx';
 import { SiteSuggestions as AdminSiteSuggestions } from './admin/pages/sites/SiteSuggestions.jsx';
 import { TrafficLookup as AdminTrafficLookup } from './admin/pages/sites/TrafficLookup.jsx';
+import ContactFinder from './admin/pages/sites/ContactFinder.jsx';
 import { AddExcel } from './admin/pages/sites/AddExcel.jsx';
 import { CreateAccountFromSites } from './admin/pages/sites/CreateAccountFromSites.jsx';
 import { DeletedSites } from './admin/pages/sites/DeletedSites.jsx';
@@ -134,6 +135,7 @@ function App() {
           <Route path="sites/link-completed" element={<LinkCompleted />} />
           <Route path="sites/suggestions" element={<AdminSiteSuggestions />} />
           <Route path="sites/traffic-lookup" element={<AdminTrafficLookup />} />
+          <Route path="sites/contact-finder" element={<ContactFinder />} />
           <Route path="sites" element={<SitesList />} />
           <Route path="sites/edit/:id" element={<EditSite />} />
 
